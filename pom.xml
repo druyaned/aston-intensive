@@ -8,10 +8,11 @@
   <modelVersion>4.0.0</modelVersion>
   
   <groupId>druyaned</groupId>
-  <artifactId>alg</artifactId>
+  <artifactId>aston-intensive</artifactId>
   <version>1.0</version>
   
   <name>Aston Intensive</name>
+  <packaging>pom</packaging>
   
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -19,7 +20,7 @@
     <maven.compiler.target>17</maven.compiler.target>
     <basePackage>druyaned.aston.intensive</basePackage>
   </properties>
-
+  
   <dependencies>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
@@ -34,7 +35,7 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
-
+  
   <build>
     
     <pluginManagement>
@@ -117,5 +118,9 @@
     </plugins>
     
   </build>
+  
+  <modules>
+    <module>user-service</module>
+  </modules>
   
 </project>
