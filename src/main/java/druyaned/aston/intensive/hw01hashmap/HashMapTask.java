@@ -1,7 +1,7 @@
 package druyaned.aston.intensive.hw01hashmap;
 
 /**
- * Task: "You need to write your own HashMap implementation;
+ * Task#01: "You need to write your own HashMap implementation;
  * compulsory methods: get, put, remove".
  * 
  * @param <K> the type of keys maintained by this map

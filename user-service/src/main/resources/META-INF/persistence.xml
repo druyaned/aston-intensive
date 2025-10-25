@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Task requirement: "Configure Hibernate without Spring using
+  hibernate.cfg.xml or a properties file" -->
+<persistence version="3.1" xmlns="https://jakarta.ee/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence              https://jakarta.ee/xml/ns/persistence/persistence_3_0.xsd">
+  <persistence-unit name="UserService" transaction-type="RESOURCE_LOCAL">
+    <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
+    <class>druyaned.aston.intensive.userservice.model.User</class>
+    <properties>
+      <!-- Database connection properties -->
+      <property name="jakarta.persistence.jdbc.driver" value="org.postgresql.Driver"/>
+      <property name="jakarta.persistence.jdbc.url" value="jdbc:postgresql://localhost:5432/user_service_druyaned"/>
+      <property name="jakarta.persistence.jdbc.user" value="druyaned"/>
+      <property name="jakarta.persistence.jdbc.password" value="0808"/>
+      <!-- Explicitly signals that there is no second-level cache -->
+      <property name="hibernate.cache.provider_class" value="org.hibernate.cache.NoCacheProvider"/>
+      <!-- Task requirement: "Set up logging". -->
+      <property name="hibernate.show_sql" value="false"/>
+      <property name="hibernate.format_sql" value="false"/>
+      <property name="hibernate.highlight_sql" value="false"/>
+      <!-- Schema generation strategy -->
+      <property name="hibernate.hbm2ddl.auto" value="update"/>
+    </properties>
+  </persistence-unit>
+  <persistence-unit name="UserServiceTest" transaction-type="RESOURCE_LOCAL">
+    <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
+    <class>druyaned.aston.intensive.userservice.model.User</class>
+    <properties>
+      <!-- Database connection properties -->
+      <property name="jakarta.persistence.jdbc.driver" value="org.h2.Driver"/>
+      <property name="jakarta.persistence.jdbc.url" value="jdbc:h2:mem:user_service_druyaned"/>
+      <property name="jakarta.persistence.jdbc.user" value="druyaned"/>
+      <property name="jakarta.persistence.jdbc.password" value="0808"/>
+      <!-- Explicitly signals that there is no second-level cache -->
+      <property name="hibernate.cache.provider_class" value="org.hibernate.cache.NoCacheProvider"/>
+      <!-- Logging properties -->
+      <property name="hibernate.show_sql" value="true"/>
+      <property name="hibernate.format_sql" value="true"/>
+      <property name="hibernate.highlight_sql" value="true"/>
+      <!-- Schema generation strategy -->
+      <property name="jakarta.persistence.schema-generation.database.action" value="drop-and-create"/>
+    </properties>
+  </persistence-unit>
+</persistence>
