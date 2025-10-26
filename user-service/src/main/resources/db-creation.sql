@@ -7,10 +7,14 @@
  * "psql -d user_service_druyaned -U druyaned".
  */
 
-CREATE ROLE druyaned WITH
-    SUPERUSER CREATEDB CREATEROLE REPLICATION BYPASSRLS
-    LOGIN PASSWORD '0808';
+CREATE ROLE druyaned WITH LOGIN PASSWORD '0808';
 
-CREATE DATABASE user_service_druyaned WITH
-    OWNER = druyaned
+CREATE DATABASE user_service_druyaned
+    WITH OWNER = druyaned
     ENCODING = 'UTF8';
+
+\c user_service_druyaned
+
+CREATE SCHEMA AUTHORIZATION druyaned;
+
+GRANT ALL ON ALL TABLES IN SCHEMA druyaned TO druyaned;

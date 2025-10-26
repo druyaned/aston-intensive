@@ -99,13 +99,7 @@ public class User implements Serializable {
     
     @Override
     public int hashCode() {
-        int hash = 3;
-        hash = 11 * hash + Objects.hashCode(this.id);
-        hash = 11 * hash + Objects.hashCode(this.name);
-        hash = 11 * hash + Objects.hashCode(this.email);
-        hash = 11 * hash + Objects.hashCode(this.birthdate);
-        hash = 11 * hash + Objects.hashCode(this.createdAt);
-        return hash;
+        return id.hashCode();
     }
     
     @Override
@@ -119,20 +113,7 @@ public class User implements Serializable {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final User other = (User)obj;
-        if (!Objects.equals(this.name, other.name)) {
-            return false;
-        }
-        if (!Objects.equals(this.email, other.email)) {
-            return false;
-        }
-        if (!Objects.equals(this.id, other.id)) {
-            return false;
-        }
-        if (!Objects.equals(this.birthdate, other.birthdate)) {
-            return false;
-        }
-        return Objects.equals(this.createdAt, other.createdAt);
+        return Objects.equals(this.id, ((User)obj).id);
     }
     
     @Override
