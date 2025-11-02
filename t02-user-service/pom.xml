@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Task requirement: "Use Maven for dependency management" -->
+<project
+    xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+        http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  
+  <modelVersion>4.0.0</modelVersion>
+  
+  <parent>
+    <groupId>druyaned</groupId>
+    <artifactId>aston-intensive</artifactId>
+    <version>1.0</version>
+  </parent>
+  
+  <groupId>druyaned</groupId>
+  <artifactId>t02-user-service</artifactId>
+  <version>1.0</version>
+  
+  <name>Task#02 User Service</name>
+  <packaging>jar</packaging>
+  
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.compiler.release>17</maven.compiler.release>
+    <basePackage>druyaned.aston.intensive.userservice</basePackage>
+  </properties>
+  
+  <dependencies>
+    <!-- Task requirement: "Use Hibernate as an ORM" -->
+    <dependency>
+      <groupId>org.hibernate.orm</groupId>
+      <artifactId>hibernate-core</artifactId>
+      <version>6.5.3.Final</version>
+    </dependency>
+    <!-- Task requirement: "The database is PostgreSQL" -->
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <version>42.7.7</version>
+    </dependency>
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <version>2.2.224</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.hibernate.validator</groupId>
+      <artifactId>hibernate-validator</artifactId>
+      <version>8.0.3.Final</version>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish</groupId>
+      <artifactId>jakarta.el</artifactId>
+      <version>4.0.2</version>
+    </dependency>
+    <!-- Additional logging configuration in log4j2.properties -->
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-core</artifactId>
+      <version>2.24.3</version>
+    </dependency>
+  </dependencies>
+  
+  <build>
+    
+    <plugins>
+      <plugin>
+        <artifactId>maven-jar-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <artifactId>maven-dependency-plugin</artifactId>
+      </plugin>
+    </plugins>
+    
+  </build>
+  
+</project>
