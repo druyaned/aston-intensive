@@ -134,7 +134,7 @@ public class UserDaoImplTest {
     }
 
     @Test
-    public void saveInvalidUser() {
+    public void saveUserWithNullEmailShouldThrowException() {
         UserEntity joe = makeJoe();
         joe.setEmail(null);
         assertThrows(ConstraintViolationException.class,
@@ -142,7 +142,22 @@ public class UserDaoImplTest {
     }
 
     @Test
-    public void saveNull() {
+    public void saveUserWithExistingEmailShouldThrowException() {
+        UserEntity joe = makeJoe();
+        userDaoImpl.save(joe);
+
+        String existingEmail = joe.getEmail();
+        UserEntity ira = makeIra();
+        ira.setEmail(existingEmail);
+
+        assertThrows(org.hibernate.exception.ConstraintViolationException.class,
+                () -> userDaoImpl.save(ira));
+
+        userDaoImpl.delete(joe);
+    }
+
+    @Test
+    public void saveNullShouldThrowException() {
         assertThrows(IllegalArgumentException.class,
                 () -> userDaoImpl.save(null));
     }

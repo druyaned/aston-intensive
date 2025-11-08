@@ -7,13 +7,18 @@ import static jakarta.persistence.Persistence.createEntityManagerFactory;
 import static jakarta.validation.Validation.buildDefaultValidatorFactory;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
+import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Scanner;
 
 /**
  * Task#02: "Develop a Java console application (user-service) using Hibernate
  * to interact with PostgreSQL, without using Spring. The application must
  * support basic CRUD operations (Create, Read, Update, Delete) on the User
  * entity."
- * 
+ *
  * <p>
  * <b>Task requirements</b>:
  * <ul>
@@ -31,41 +36,65 @@ import jakarta.validation.ValidatorFactory;
  *     database</li>
  *   <li>Handle possible exceptions related to Hibernate and PostgreSQL</li>
  * </ul>
- * 
+ *
  * <p>
  * All tasks are carefully solved. There are some comments across the project
  * which can be looked up by "{@code task requirement}" (ignore case).
- * 
+ *
  * <p>
  * There were alternatives: Hibernate API or JPA API. The choice fell on
  * JPA, because it's more relevant for these topic and task.
- * 
+ *
  * <p>
  * The main method creates a {@link Validator} (there was no way not to use
  * it here), {@link EntityManager}, and runs the {@link AppConsole app}.
- * 
+ *
  * <p>
  * <b>How to run</b>:
  * <ol>
  *   <li>PostgreSQL database must be installed</li>
- *   <li>Execute the script "db-creation.sql" in the resources directory</li>
+ *   <li>Execute the script "db-create.sql" in the resources directory</li>
  *   <li>Run the app using command line tool</li>
  * </ol>
- * 
+ *
  * @author druyaned
  */
 public class App {
-    
+
+    private static final Scanner SCANNER = new Scanner(System.in);
+
     public static void main(String[] args) {
         try (
                 ValidatorFactory vf = buildDefaultValidatorFactory();
-                EntityManagerFactory emf
-                        = createEntityManagerFactory("UserService");
-                EntityManager entityManager = emf.createEntityManager();
-        ) {
+                EntityManagerFactory emf = createEntityManagerFactory(
+                        "UserService",
+                        dbConnectionMap());
+                EntityManager entityManager = emf.createEntityManager();) {
+
             Validator validator = vf.getValidator();
-            AppConsole console = new AppConsole(entityManager, validator);
+            AppConsole console = new AppConsole(System.out, System.err,
+                    SCANNER, entityManager, validator);
+
             console.run();
+
+        } catch (IOException exc) {
+            exc.printStackTrace();
         }
+    }
+
+    private static Map dbConnectionMap() throws IOException {
+        Properties dbConnectionProperties = new Properties();
+        dbConnectionProperties.load(App.class
+                .getResourceAsStream("/db-connection.properties"));
+
+        Map connectionMap = new LinkedHashMap();
+        connectionMap.put("jakarta.persistence.jdbc.url",
+                dbConnectionProperties.get("spring.datasource.url"));
+        connectionMap.put("jakarta.persistence.jdbc.user",
+                dbConnectionProperties.get("spring.datasource.username"));
+        connectionMap.put("jakarta.persistence.jdbc.password",
+                dbConnectionProperties.get("spring.datasource.password"));
+
+        return connectionMap;
     }
 }

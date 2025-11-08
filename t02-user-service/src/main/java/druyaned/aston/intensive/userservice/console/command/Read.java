@@ -1,37 +1,39 @@
 package druyaned.aston.intensive.userservice.console.command;
 
 import druyaned.aston.intensive.userservice.dao.UserDao;
-import druyaned.aston.intensive.userservice.model.User;
-import jakarta.validation.Validator;
+import druyaned.aston.intensive.userservice.model.UserEntity;
 
 /**
  * Reads a user by the given ID from the database.
- * 
+ *
  * @author druyaned
  */
-public class Read extends CommandAbstract {
-    
+public class Read implements Command {
+
     public static final String CODE = "r";
-    
+
     public static final String DESCRIPTION
             = "'" + CODE + " [ID]' - read user by id";
-    
-    public Read(UserDao userDao, Validator validator) {
-        super(userDao, validator);
+
+    protected final UserDao userDao;
+
+    public Read(UserDao userDao) {
+        this.userDao = userDao;
     }
-    
+
     @Override
     public String code() {
         return CODE;
     }
-    
+
     @Override
     public String execute(String[] input) {
-        // Deal with input
         String violationMessage = CommandUtils.verifyInput(input, 2);
         if (violationMessage != null) {
             return violationMessage;
         }
+
+        // Extract arguments
         String idStr = input[1];
         Long id;
         try {
@@ -39,12 +41,11 @@ public class Read extends CommandAbstract {
         } catch (NumberFormatException exc) {
             return "Id '" + idStr + "' can't be parsed";
         }
-        // Deal with user and DAO
-        User user = userDao.find(id);
-        if (user == null) {
-            return "There is no user with id=" + id;
-        } else {
-            return "Found user: " + CommandUtils.outputUser(user);
-        }
+
+        // Get user
+        UserEntity user = userDao.find(id);
+        return user == null
+                ? "There is no user with id=" + id
+                : "Found user: " + CommandUtils.outputUser(user);
     }
 }

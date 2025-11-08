@@ -24,7 +24,7 @@ import java.util.Scanner;
  * <li>To test the Service layer, write unit tests using Mockito</li>
  * <li>The tests should be isolated from each other</li>
  * </ul>
- * 
+ *
  * <p>
  * All the requirements were completely and carefully met.
  *
@@ -32,7 +32,7 @@ import java.util.Scanner;
  * <b>How to run</b>:
  * <ol>
  * <li>PostgreSQL database must be installed</li>
- * <li>Follow instructions in the "src/main/resources/db-creation.sql"</li>
+ * <li>Follow instructions in the "src/main/resources/db-create.sql"</li>
  * <li>Run the app using command line tool</li>
  * </ol>
  *
@@ -64,15 +64,15 @@ public class App {
     private static Map dbConnectionMap() throws IOException {
         Properties dbConnectionProperties = new Properties();
         dbConnectionProperties.load(App.class
-                .getResourceAsStream("/db_connection.properties"));
+                .getResourceAsStream("/db-connection.properties"));
 
         Map connectionMap = new LinkedHashMap();
         connectionMap.put("jakarta.persistence.jdbc.url",
-                dbConnectionProperties.get("db.url"));
+                dbConnectionProperties.get("spring.datasource.url"));
         connectionMap.put("jakarta.persistence.jdbc.user",
-                dbConnectionProperties.get("db.user"));
+                dbConnectionProperties.get("spring.datasource.username"));
         connectionMap.put("jakarta.persistence.jdbc.password",
-                dbConnectionProperties.get("db.password"));
+                dbConnectionProperties.get("spring.datasource.password"));
 
         return connectionMap;
     }
