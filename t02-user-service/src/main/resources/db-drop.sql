@@ -1,0 +1,3 @@
+DROP DATABASE IF EXISTS user_service_/* <USERNAME> */;
+
+DROP ROLE IF EXISTS /* <USERNAME> */;

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence version="3.1" xmlns="https://jakarta.ee/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence              https://jakarta.ee/xml/ns/persistence/persistence_3_0.xsd">
+  <persistence-unit name="UserService" transaction-type="RESOURCE_LOCAL">
+    <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
+    <class>druyaned.aston.intensive.userservice.model.UserEntity</class>
+    <properties>
+      <!-- Database connection -->
+      <property name="jakarta.persistence.jdbc.driver" value="org.postgresql.Driver"/>
+      <!-- System.out logging -->
+      <property name="hibernate.format_sql" value="true"/>
+      <property name="hibernate.highlight_sql" value="true"/>
+      <!-- Explicitly signals: there is no second-level and query cache -->
+      <property name="hibernate.cache.use_second_level_cache" value="false"/>
+      <property name="hibernate.cache.use_query_cache" value="false"/>
+      <!-- Schema generation strategy -->
+      <property name="jakarta.persistence.schema-generation.database.action" value="update"/>
+      <!--<property name="hibernate.hbm2ddl.auto" value="update"/>-->
+    </properties>
+  </persistence-unit>
+</persistence>
