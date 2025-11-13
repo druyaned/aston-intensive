@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>druyaned</groupId>
+    <artifactId>aston-intensive</artifactId>
+    <version>1.0</version>
+  </parent>
+
+  <groupId>druyaned</groupId>
+  <artifactId>t05-kafka</artifactId>
+  <version>1.0</version>
+
+  <name>Task#05 Kafka</name>
+  <packaging>pom</packaging>
+
+  <properties>
+  </properties>
+
+  <dependencyManagement>
+  </dependencyManagement>
+
+  <dependencies>
+  </dependencies>
+
+  <build>
+    <plugins>
+    </plugins>
+  </build>
+
+  <modules>
+    <module>t05-user-service</module>
+    <module>t05-notification-service</module>
+  </modules>
+
+</project>
