@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project
+    xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+        http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  
+  <modelVersion>4.0.0</modelVersion>
+  
+  <parent>
+    <groupId>druyaned</groupId>
+    <artifactId>aston-intensive</artifactId>
+    <version>1.0</version>
+  </parent>
+  
+  <groupId>druyaned</groupId>
+  <artifactId>t01-hashmap</artifactId>
+  <version>1.0</version>
+  
+  <name>Task#01 HashMap</name>
+  <packaging>jar</packaging>
+  
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.compiler.release>17</maven.compiler.release>
+    <basePackage>druyaned.aston.intensive.t01hashmap</basePackage>
+  </properties>
+  
+  <build>
+    
+    <plugins>
+      <plugin>
+        <artifactId>maven-jar-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <artifactId>maven-dependency-plugin</artifactId>
+      </plugin>
+    </plugins>
+    
+  </build>
+  
+</project>
