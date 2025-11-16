@@ -12,7 +12,7 @@ import java.time.OffsetDateTime;
  *
  * @author druyaned
  */
-public class UserAdapters {
+public class UserMapper {
 
     /**
      * Creates a new {@code UserEntity} and sets every field of the entity as in

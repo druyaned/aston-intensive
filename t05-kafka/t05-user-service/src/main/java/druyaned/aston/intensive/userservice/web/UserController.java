@@ -1,8 +1,10 @@
 package druyaned.aston.intensive.userservice.web;
 
-import druyaned.aston.intensive.userservice.model.UserAdapters;
+import druyaned.aston.intensive.userservice.model.UserMapper;
 import druyaned.aston.intensive.userservice.model.UserDto;
 import druyaned.aston.intensive.userservice.model.UserEntity;
+import static druyaned.aston.intensive.userservice.notify.KafkaProducerConfig.USER_EVENTS_TOPIC;
+import druyaned.aston.intensive.userservice.notify.UserEvent;
 import druyaned.aston.intensive.userservice.repo.UserRepository;
 import jakarta.validation.Valid;
 import java.net.URI;
@@ -13,6 +15,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,18 +32,22 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 public class UserController {
 
     private final UserRepository userRepo;
+    private final KafkaTemplate<String, UserEvent> kafkaTemplate;
 
-    public UserController(UserRepository userRepo) {
+    public UserController(UserRepository userRepo,
+            KafkaTemplate<String, UserEvent> kafkaTemplate) {
+
         this.userRepo = userRepo;
+        this.kafkaTemplate = kafkaTemplate;
     }
+
 
     @GetMapping("/users")
     public ResponseEntity<List<UserDto>> getAll(Pageable pageable) {
         Page<UserEntity> page = userRepo.findAll(pageable);
 
-        List<UserDto> userList = page.stream().collect(
-                ArrayList::new,
-                (list, user) -> list.add(UserAdapters.dtoFromEntity(user)),
+        List<UserDto> userList = page.stream().collect(ArrayList::new,
+                (list, user) -> list.add(UserMapper.dtoFromEntity(user)),
                 ArrayList::addAll);
 
         return ResponseEntity.ok(userList);
@@ -51,7 +58,7 @@ public class UserController {
         Optional<UserEntity> userOpt = userRepo.findById(id);
 
         return userOpt.isPresent()
-                ? ResponseEntity.ok(UserAdapters.dtoFromEntity(userOpt.get()))
+                ? ResponseEntity.ok(UserMapper.dtoFromEntity(userOpt.get()))
                 : ResponseEntity.notFound().build();
     }
 
@@ -71,8 +78,12 @@ public class UserController {
             return ResponseEntity.badRequest().body(message);
         }
 
-        UserEntity user = UserAdapters.entityFromDto(userDto);
+        UserEntity user = UserMapper.entityFromDto(userDto);
         UserEntity savedUser = userRepo.save(user);
+
+        kafkaTemplate.send(USER_EVENTS_TOPIC,
+                user.getEmail(), // email key
+                new UserEvent(UserEvent.Type.CREATE, user.getId()));
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequestUri()
@@ -81,7 +92,7 @@ public class UserController {
                 .buildAndExpand(savedUser.getId())
                 .toUri();
 
-        return ResponseEntity.created(location).build();
+        return ResponseEntity.created(location).body("Created");
     }
 
     @PutMapping("/update/{id}")
@@ -106,7 +117,7 @@ public class UserController {
             return ResponseEntity.badRequest().body(message);
         }
 
-        UserAdapters.setEntityByDto(user, userDto);
+        UserMapper.setEntityByDto(user, userDto);
         userRepo.save(user);
 
         return ResponseEntity.ok("Updated");
@@ -115,12 +126,18 @@ public class UserController {
     @DeleteMapping("/delete/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public ResponseEntity<String> delete(@PathVariable Long id) {
+        Optional<UserEntity> userOpt = userRepo.findById(id);
 
-        ResponseEntity<String> response = userRepo.existsById(id)
-                ? ResponseEntity.ok("Deleted")
-                : ResponseEntity.notFound().build();
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
 
+        ResponseEntity<String> response = ResponseEntity.ok("Deleted");
         userRepo.deleteById(id);
+
+        kafkaTemplate.send(USER_EVENTS_TOPIC,
+                userOpt.get().getEmail(), // email key
+                new UserEvent(UserEvent.Type.DELETE, id));
 
         return response;
     }

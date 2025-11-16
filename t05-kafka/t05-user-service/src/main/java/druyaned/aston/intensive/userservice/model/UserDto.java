@@ -1,6 +1,7 @@
 package druyaned.aston.intensive.userservice.model;
 
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.PastOrPresent;
@@ -16,13 +17,14 @@ public class UserDto implements Serializable {
     private Long id;
 
     @NotNull(message = "Name can not be null")
+    @NotBlank
     @Size(min = 2, max = 127, message = "Name length should be in [2, 127]")
     private String name;
 
     @NotNull(message = "Email can not be null")
-    @Email(regexp = "^(?=.{1,64}@.{3,255}$)"
+    @Email(regexp = "^(?=.{1,64}@.{4,255}$)"
             + "[A-Za-z0-9_-]+(\\.[A-Za-z0-9_-]+)*@"
-            + "[^-][A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$")
+            + "[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$")
     private String email;
 
     @Past

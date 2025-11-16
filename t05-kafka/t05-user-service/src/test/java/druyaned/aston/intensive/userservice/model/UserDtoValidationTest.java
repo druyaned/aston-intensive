@@ -16,11 +16,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
-public class UserEntityValidationTest {
+public class UserDtoValidationTest {
 
     private static Validator validator;
 
-    private UserEntity user;
+    private UserDto userDto;
 
     @BeforeAll
     public static void setUpTestClass() {
@@ -31,28 +31,24 @@ public class UserEntityValidationTest {
 
     @BeforeEach
     public void setUpTestMethod() {
-        user = new UserEntity();
+        userDto = new UserDto();
 
-        user.setId(1L);
-        user.setName("Kai");
-        user.setEmail("kai@boombox.org");
-        user.setBirthdate(LocalDate.parse("2002-07-16"));
-        user.setCreatedAt(OffsetDateTime.parse(
-                "2025-10-26T03:30:43.559921+03"));
+        userDto.setId(1L);
+        userDto.setName("Kai");
+        userDto.setEmail("kai@boombox.org");
+        userDto.setBirthdate(LocalDate.parse("2002-07-16"));
+        userDto.setCreatedAt(OffsetDateTime.parse("2025-10-26T03:30:43.559921+03"));
     }
 
     @Test
     public void nullNameIsInvalid() {
-        user.setName(null);
+        userDto.setName(null);
 
-        Set<ConstraintViolation<UserEntity>> violations
-                = validator.validate(user);
+        Set<ConstraintViolation<UserDto>> violations = validator.validate(userDto);
 
-        assertEquals(1, violations.size());
+        assertEquals(2, violations.size());
 
-        ConstraintViolation<UserEntity> violation = violations
-                .iterator()
-                .next();
+        ConstraintViolation<UserDto> violation = violations.iterator().next();
 
         assertEquals("name", violation.getPropertyPath().toString());
         assertEquals("Name can not be null", violation.getMessage());
@@ -60,42 +56,35 @@ public class UserEntityValidationTest {
 
     @Test
     public void nameFromOneLetterIsInvalid() {
-        user.setName("A");
+        userDto.setName("A");
 
-        Set<ConstraintViolation<UserEntity>> violations
-                = validator.validate(user);
+        Set<ConstraintViolation<UserDto>> violations = validator.validate(userDto);
 
         assertEquals(1, violations.size());
 
-        ConstraintViolation<UserEntity> violation = violations
-                .iterator()
-                .next();
+        ConstraintViolation<UserDto> violation = violations.iterator().next();
 
         assertEquals("name", violation.getPropertyPath().toString());
     }
 
     @Test
     public void tooBigNameIsInvalid() {
-        user.setName("a".repeat(128));
+        userDto.setName("a".repeat(128));
 
-        Set<ConstraintViolation<UserEntity>> violations
-                = validator.validate(user);
+        Set<ConstraintViolation<UserDto>> violations = validator.validate(userDto);
 
         assertEquals(1, violations.size());
 
-        ConstraintViolation<UserEntity> violation = violations
-                .iterator()
-                .next();
+        ConstraintViolation<UserDto> violation = violations.iterator().next();
 
         assertEquals("name", violation.getPropertyPath().toString());
     }
 
     @Test
     public void validName() {
-        user.setName("Kai");
+        userDto.setName("Kai");
 
-        Set<ConstraintViolation<UserEntity>> violations
-                = validator.validate(user);
+        Set<ConstraintViolation<UserDto>> violations = validator.validate(userDto);
 
         assertTrue(violations.isEmpty());
     }
@@ -103,16 +92,13 @@ public class UserEntityValidationTest {
     @ParameterizedTest
     @MethodSource("makeInvalidEmails")
     public void invalidEmail(String email) {
-        user.setEmail(email);
+        userDto.setEmail(email);
 
-        Set<ConstraintViolation<UserEntity>> violations
-                = validator.validate(user);
+        Set<ConstraintViolation<UserDto>> violations = validator.validate(userDto);
 
         assertEquals(1, violations.size());
 
-        ConstraintViolation<UserEntity> violation = violations
-                .iterator()
-                .next();
+        ConstraintViolation<UserDto> violation = violations.iterator().next();
 
         assertEquals("email", violation.getPropertyPath().toString());
     }
@@ -143,10 +129,9 @@ public class UserEntityValidationTest {
     @ParameterizedTest
     @MethodSource("makeValidEmails")
     public void validEmail(String email) {
-        user.setEmail(email);
+        userDto.setEmail(email);
 
-        Set<ConstraintViolation<UserEntity>> violations
-                = validator.validate(user);
+        Set<ConstraintViolation<UserDto>> violations = validator.validate(userDto);
 
         assertTrue(violations.isEmpty());
     }

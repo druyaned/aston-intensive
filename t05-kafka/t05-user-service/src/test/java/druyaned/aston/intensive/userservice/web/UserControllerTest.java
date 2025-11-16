@@ -3,15 +3,17 @@ package druyaned.aston.intensive.userservice.web;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import druyaned.aston.intensive.userservice.model.UserAdapters;
+import druyaned.aston.intensive.userservice.model.UserMapper;
 import druyaned.aston.intensive.userservice.model.UserDto;
 import druyaned.aston.intensive.userservice.model.UserEntity;
+import druyaned.aston.intensive.userservice.notify.UserEvent;
 import druyaned.aston.intensive.userservice.repo.UserRepository;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeAll;
@@ -30,6 +32,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -47,6 +50,9 @@ public class UserControllerTest {
 
     @MockitoBean
     private UserRepository userRepo;
+
+    @MockitoBean
+    private KafkaTemplate<String, UserEvent> kafkaTemplate;
 
     @BeforeAll
     public static void setUpTestClass() {
@@ -125,7 +131,7 @@ public class UserControllerTest {
 
     @Test
     public void createByExistingEmailShouldReturnBadRequest() throws Exception {
-        UserDto userDto = UserAdapters.dtoFromEntity(makeUser());
+        UserDto userDto = UserMapper.dtoFromEntity(makeUser());
         String expectedContent = "Email \"" + userDto.getEmail() + "\" exists";
 
         when(userRepo.existsByEmail(userDto.getEmail())).thenReturn(true);
@@ -139,17 +145,20 @@ public class UserControllerTest {
 
         verify(userRepo).existsByEmail(userDto.getEmail());
         verify(userRepo, never()).save(any(UserEntity.class));
+        verify(kafkaTemplate, never()).send(anyString(), anyString(), any(UserEvent.class));
     }
 
     @Test
     public void createShouldReturnCreated() throws Exception {
         UserEntity savedUser = makeUser();
-        UserDto userDto = UserAdapters.dtoFromEntity(savedUser);
+        UserDto userDto = UserMapper.dtoFromEntity(savedUser);
         String expectedLocation = "http://localhost/user-service/create/user/"
                 + savedUser.getId();
 
         when(userRepo.existsByEmail(userDto.getEmail())).thenReturn(false);
         when(userRepo.save(any(UserEntity.class))).thenReturn(savedUser);
+        when(kafkaTemplate.send(anyString(), anyString(), any(UserEvent.class)))
+                .thenReturn(any(CompletableFuture.class));
 
         mockMvc.perform(
                 post("/user-service/create")
@@ -161,11 +170,12 @@ public class UserControllerTest {
 
         verify(userRepo).existsByEmail(userDto.getEmail());
         verify(userRepo).save(any(UserEntity.class));
+        verify(kafkaTemplate).send(anyString(), anyString(), any(UserEvent.class));
     }
 
     @Test
     public void updateByNonExistingIdShouldReturnNotFound() throws Exception {
-        UserDto userDto = UserAdapters.dtoFromEntity(makeUser());
+        UserDto userDto = UserMapper.dtoFromEntity(makeUser());
 
         when(userRepo.findById(userDto.getId())).thenReturn(Optional.empty());
 
@@ -183,7 +193,7 @@ public class UserControllerTest {
     @Test
     public void updateByExistingEmailShouldReturnBadRequest() throws Exception {
         UserEntity user = makeUser();
-        UserDto userDto = UserAdapters.dtoFromEntity(user);
+        UserDto userDto = UserMapper.dtoFromEntity(user);
 
         String existingEmail = "existing@email.com";
         userDto.setEmail(existingEmail);
@@ -207,7 +217,7 @@ public class UserControllerTest {
     @Test
     public void updateShouldReturnOk() throws Exception {
         UserEntity user = makeUser();
-        UserDto userDto = UserAdapters.dtoFromEntity(user);
+        UserDto userDto = UserMapper.dtoFromEntity(user);
 
         String otherEmail = "other@email.com";
         userDto.setEmail(otherEmail);
@@ -234,27 +244,31 @@ public class UserControllerTest {
     public void deleteByNonExistingIdShouldReturnNotFound() throws Exception {
         Long id = 2L;
 
-        when(userRepo.existsById(id)).thenReturn(false);
+        when(userRepo.findById(id)).thenReturn(Optional.empty());
 
         mockMvc.perform(delete("/user-service/delete/" + id))
                 .andExpect(status().isNotFound());
 
-        verify(userRepo).existsById(id);
+        verify(userRepo).findById(id);
+        verify(kafkaTemplate, never()).send(anyString(), anyString(), any(UserEvent.class));
     }
 
     @Test
     public void deleteShouldReturnOk() throws Exception {
-        Long id = 2L;
+        UserEntity user = makeUser();
 
-        when(userRepo.existsById(id)).thenReturn(true);
-        doNothing().when(userRepo).deleteById(id);
+        when(userRepo.findById(user.getId())).thenReturn(Optional.of(user));
+        doNothing().when(userRepo).deleteById(user.getId());
+        when(kafkaTemplate.send(anyString(), anyString(), any(UserEvent.class)))
+                .thenReturn(any(CompletableFuture.class));
 
-        mockMvc.perform(delete("/user-service/delete/" + id))
+        mockMvc.perform(delete("/user-service/delete/" + user.getId()))
                 .andExpect(status().isOk())
                 .andExpect(content().string("Deleted"));
 
-        verify(userRepo).existsById(id);
-        verify(userRepo).deleteById(id);
+        verify(userRepo).findById(user.getId());
+        verify(userRepo).deleteById(user.getId());
+        verify(kafkaTemplate).send(anyString(), anyString(), any(UserEvent.class));
     }
 
     private UserEntity makeUser() {
