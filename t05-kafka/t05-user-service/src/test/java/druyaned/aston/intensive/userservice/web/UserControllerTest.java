@@ -3,42 +3,47 @@ package druyaned.aston.intensive.userservice.web;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import druyaned.aston.intensive.userservice.model.UserMapper;
 import druyaned.aston.intensive.userservice.model.UserDto;
-import druyaned.aston.intensive.userservice.model.UserEntity;
 import druyaned.aston.intensive.userservice.notify.UserEvent;
-import druyaned.aston.intensive.userservice.repo.UserRepository;
+import druyaned.aston.intensive.userservice.serve.UserService;
+import druyaned.aston.intensive.userservice.serve.UserService.Result;
+import static druyaned.aston.intensive.userservice.serve.UserService.Result.Type.CREATED;
+import static druyaned.aston.intensive.userservice.serve.UserService.Result.Type.DELETED;
+import static druyaned.aston.intensive.userservice.serve.UserService.Result.Type.NOT_UPDATED;
+import static druyaned.aston.intensive.userservice.serve.UserService.Result.Type.UPDATED;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 @WebMvcTest(UserController.class)
 public class UserControllerTest {
@@ -49,7 +54,7 @@ public class UserControllerTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private UserRepository userRepo;
+    private UserService userService;
 
     @MockitoBean
     private KafkaTemplate<String, UserEvent> kafkaTemplate;
@@ -62,11 +67,10 @@ public class UserControllerTest {
 
     @Test
     public void getAllShouldReturnOkAndAllUsers() throws Exception {
-        List<UserEntity> users = makeUsers();
-        Pageable pageable = PageRequest.of(0, 10);
-        Page<UserEntity> page = new PageImpl<>(users, pageable, users.size());
+        List<UserDto> userDtoList = makeUserDtoList();
+        Result<List<UserDto>> result = new Result<>(Result.Type.FOUND, "", userDtoList);
 
-        when(userRepo.findAll(any(Pageable.class))).thenReturn(page);
+        when(userService.getAll(any(Pageable.class))).thenReturn(result);
 
         MockHttpServletResponse response = mockMvc
                 .perform(get("/user-service/users"))
@@ -75,88 +79,93 @@ public class UserControllerTest {
                 .andReturn()
                 .getResponse();
 
-        verify(userRepo).findAll(any(Pageable.class));
+        verify(userService).getAll(any(Pageable.class));
 
-        List<UserEntity> responseUsers = objectMapper.readValue(
-                response.getContentAsString(),
-                new TypeReference<List<UserEntity>>() {});
+        TypeReference<List<UserDto>> typeReference = new TypeReference<List<UserDto>>() {
+        };
+        List<UserDto> responseUsers = objectMapper.readValue(response.getContentAsString(),
+                typeReference);
 
-        assertEquals(HttpStatus.OK.value(), response.getStatus());
-        assertEquals(users.size(), responseUsers.size());
-        assertTrue(users.containsAll(responseUsers));
+        assertEquals(userDtoList.size(), responseUsers.size());
+
+        for (UserDto userDto : userDtoList) {
+            OffsetDateTime createdAt = userDto.getCreatedAt();
+            userDto.setCreatedAt(createdAt.withOffsetSameInstant(ZoneOffset.UTC));
+        }
+        assertTrue(userDtoList.containsAll(responseUsers));
     }
 
-    private List<UserEntity> makeUsers() {
-        List<UserEntity> list = new ArrayList<>();
+    private List<UserDto> makeUserDtoList() {
+        List<UserDto> userDtoList = new ArrayList<>();
 
-        list.add(makeUser());
-        list.add(makeUser(2L, "Leo", "leo@alamail.com", "2001-08-17",
+        userDtoList.add(makeUserDto());
+        userDtoList.add(makeUserDto(2L, "Leo", "leo@alamail.com", "2001-08-17",
                 "2025-10-26T03:30:26.76015+03"));
-        list.add(makeUser(3L, "Kai", "kai@boombox.org", "2002-07-16",
+        userDtoList.add(makeUserDto(3L, "Kai", "kai@boombox.org", "2002-07-16",
                 "2025-10-26T03:30:43.559921+03"));
-        list.add(makeUser(4L, "Mia", "mia@beauty.net", null,
+        userDtoList.add(makeUserDto(4L, "Mia", "mia@beauty.net", null,
                 "2025-10-26T03:31:03.376876+03"));
-        list.add(makeUser(5L, "Ana", "ana@javadev.int", null,
+        userDtoList.add(makeUserDto(5L, "Ana", "ana@javadev.int", null,
                 "2025-10-26T03:31:12.042545+03"));
-        list.add(makeUser(6L, "Ira", "ira@eli.pali", null,
+        userDtoList.add(makeUserDto(6L, "Ira", "ira@eli.pali", null,
                 "2025-11-01T21:45:21.921686+03"));
 
-        return list;
+        return userDtoList;
     }
 
     @Test
     public void getShouldReturnNotFound() throws Exception {
-        when(userRepo.findById(1L)).thenReturn(Optional.empty());
+        Long id = 1L;
+        Result<UserDto> result = Result.notFound(id);
 
-        mockMvc.perform(get("/user-service/user/1"))
-                .andExpect(status().isNotFound());
+        when(userService.get(anyLong())).thenReturn(result);
 
-        verify(userRepo).findById(1L);
+        mockMvc.perform(get("/user-service/user/1")).andExpect(status().isNotFound());
+
+        verify(userService).get(anyLong());
     }
 
     @Test
     public void getShouldReturnOkAndUserEntity() throws Exception {
-        UserEntity user = makeUser();
+        UserDto userDto = makeUserDto();
+        Result<UserDto> result = new Result<>(Result.Type.FOUND, "", userDto);
 
-        when(userRepo.findById(user.getId())).thenReturn(Optional.of(user));
+        when(userService.get(anyLong())).thenReturn(result);
 
-        mockMvc.perform(get("/user-service/user/" + user.getId()))
+        mockMvc.perform(get("/user-service/user/" + userDto.getId()))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.name").value(user.getName()))
-                .andExpect(jsonPath("$.email").value(user.getEmail()));
+                .andExpect(jsonPath("$.name").value(userDto.getName()))
+                .andExpect(jsonPath("$.email").value(userDto.getEmail()));
 
-        verify(userRepo).findById(user.getId());
+        verify(userService).get(anyLong());
     }
 
     @Test
     public void createByExistingEmailShouldReturnBadRequest() throws Exception {
-        UserDto userDto = UserMapper.dtoFromEntity(makeUser());
-        String expectedContent = "Email \"" + userDto.getEmail() + "\" exists";
+        UserDto userDto = makeUserDto();
+        Result<UserDto> result = new Result<>(Result.Type.NOT_CREATED, "", null);
 
-        when(userRepo.existsByEmail(userDto.getEmail())).thenReturn(true);
+        when(userService.create(any(UserDto.class))).thenReturn(result);
 
         mockMvc.perform(
                 post("/user-service/create")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(userDto)))
-                .andExpect(status().isBadRequest())
-                .andExpect(content().string(expectedContent));
+                .andExpect(status().isBadRequest());
 
-        verify(userRepo).existsByEmail(userDto.getEmail());
-        verify(userRepo, never()).save(any(UserEntity.class));
+        verify(userService).create(any(UserDto.class));
         verify(kafkaTemplate, never()).send(anyString(), anyString(), any(UserEvent.class));
     }
 
     @Test
     public void createShouldReturnCreated() throws Exception {
-        UserEntity savedUser = makeUser();
-        UserDto userDto = UserMapper.dtoFromEntity(savedUser);
+        UserDto userDto = makeUserDto();
+        Result<UserDto> result = new Result<>(CREATED, "", userDto);
         String expectedLocation = "http://localhost/user-service/create/user/"
-                + savedUser.getId();
+                + userDto.getId();
 
-        when(userRepo.existsByEmail(userDto.getEmail())).thenReturn(false);
-        when(userRepo.save(any(UserEntity.class))).thenReturn(savedUser);
+        when(userService.create(any(UserDto.class))).thenReturn(result);
         when(kafkaTemplate.send(anyString(), anyString(), any(UserEvent.class)))
                 .thenReturn(any(CompletableFuture.class));
 
@@ -168,16 +177,16 @@ public class UserControllerTest {
                 .andExpect(header().exists("Location"))
                 .andExpect(header().string("Location", expectedLocation));
 
-        verify(userRepo).existsByEmail(userDto.getEmail());
-        verify(userRepo).save(any(UserEntity.class));
+        verify(userService).create(any(UserDto.class));
         verify(kafkaTemplate).send(anyString(), anyString(), any(UserEvent.class));
     }
 
     @Test
     public void updateByNonExistingIdShouldReturnNotFound() throws Exception {
-        UserDto userDto = UserMapper.dtoFromEntity(makeUser());
+        UserDto userDto = makeUserDto();
+        Result<UserDto> result = Result.notFound(userDto.getId());
 
-        when(userRepo.findById(userDto.getId())).thenReturn(Optional.empty());
+        when(userService.update(anyLong(), any(UserDto.class))).thenReturn(result);
 
         mockMvc.perform(
                 put("/user-service/update/" + userDto.getId())
@@ -185,112 +194,84 @@ public class UserControllerTest {
                         .content(objectMapper.writeValueAsString(userDto)))
                 .andExpect(status().isNotFound());
 
-        verify(userRepo).findById(userDto.getId());
-        verify(userRepo, never()).existsByEmail(anyString());
-        verify(userRepo, never()).save(any(UserEntity.class));
+        verify(userService).update(anyLong(), any(UserDto.class));
     }
 
     @Test
     public void updateByExistingEmailShouldReturnBadRequest() throws Exception {
-        UserEntity user = makeUser();
-        UserDto userDto = UserMapper.dtoFromEntity(user);
+        UserDto userDto = makeUserDto();
+        Result<UserDto> result = new Result<>(NOT_UPDATED, "", null);
 
-        String existingEmail = "existing@email.com";
-        userDto.setEmail(existingEmail);
-
-        when(userRepo.findById(userDto.getId())).thenReturn(Optional.of(user));
-        when(userRepo.existsByEmail(existingEmail)).thenReturn(true);
+        when(userService.update(anyLong(), any(UserDto.class))).thenReturn(result);
 
         mockMvc.perform(
-                put("/user-service/update/" + user.getId())
+                put("/user-service/update/" + userDto.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(userDto)))
-                .andExpect(status().isBadRequest())
-                .andExpect(content().string("Email \""
-                        + existingEmail + "\" exists"));
+                .andExpect(status().isBadRequest());
 
-        verify(userRepo).findById(user.getId());
-        verify(userRepo).existsByEmail(existingEmail);
-        verify(userRepo, never()).save(any(UserEntity.class));
+        verify(userService).update(anyLong(), any(UserDto.class));
     }
 
     @Test
     public void updateShouldReturnOk() throws Exception {
-        UserEntity user = makeUser();
-        UserDto userDto = UserMapper.dtoFromEntity(user);
+        UserDto userDto = makeUserDto();
+        Result<UserDto> result = new Result<>(UPDATED, "", userDto);
 
-        String otherEmail = "other@email.com";
-        userDto.setEmail(otherEmail);
-
-        when(userRepo.findById(userDto.getId())).thenReturn(Optional.of(user));
-        when(userRepo.existsByEmail(otherEmail)).thenReturn(false);
-        when(userRepo.save(user)).thenReturn(user);
+        when(userService.update(anyLong(), any(UserDto.class))).thenReturn(result);
 
         mockMvc.perform(
-                put("/user-service/update/" + user.getId())
+                put("/user-service/update/" + userDto.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(userDto)))
-                .andExpect(status().isOk())
-                .andExpect(content().string("Updated"));
+                .andExpect(status().isOk());
 
-        verify(userRepo).findById(user.getId());
-        verify(userRepo).existsByEmail(otherEmail);
-        verify(userRepo).save(user);
-
-        assertEquals(otherEmail, user.getEmail());
+        verify(userService).update(anyLong(), any(UserDto.class));
     }
 
     @Test
     public void deleteByNonExistingIdShouldReturnNotFound() throws Exception {
         Long id = 2L;
+        Result<UserDto> result = Result.notFound(id);
 
-        when(userRepo.findById(id)).thenReturn(Optional.empty());
+        when(userService.delete(anyLong())).thenReturn(result);
 
         mockMvc.perform(delete("/user-service/delete/" + id))
                 .andExpect(status().isNotFound());
 
-        verify(userRepo).findById(id);
+        verify(userService).delete(anyLong());
         verify(kafkaTemplate, never()).send(anyString(), anyString(), any(UserEvent.class));
     }
 
     @Test
     public void deleteShouldReturnOk() throws Exception {
-        UserEntity user = makeUser();
+        UserDto userDto = makeUserDto();
+        Result<UserDto> result = new Result<>(DELETED, "", userDto);
 
-        when(userRepo.findById(user.getId())).thenReturn(Optional.of(user));
-        doNothing().when(userRepo).deleteById(user.getId());
+        when(userService.delete(anyLong())).thenReturn(result);
         when(kafkaTemplate.send(anyString(), anyString(), any(UserEvent.class)))
                 .thenReturn(any(CompletableFuture.class));
 
-        mockMvc.perform(delete("/user-service/delete/" + user.getId()))
-                .andExpect(status().isOk())
-                .andExpect(content().string("Deleted"));
+        mockMvc.perform(delete("/user-service/delete/" + userDto.getId()))
+                .andExpect(status().isOk());
 
-        verify(userRepo).findById(user.getId());
-        verify(userRepo).deleteById(user.getId());
+        verify(userService).delete(anyLong());
         verify(kafkaTemplate).send(anyString(), anyString(), any(UserEvent.class));
     }
 
-    private UserEntity makeUser() {
-        return makeUser(1L, "Max", "max@example.com", null,
-                "2025-10-26T03:30:14.172079+03");
+    private UserDto makeUserDto() {
+        return makeUserDto(1L, "Max", "max@example.com", null, "2025-10-26T03:30:14.172079+03");
     }
 
-    private UserEntity makeUser(
-            Long id,
-            String name,
-            String email,
-            String birthdate,
+    private UserDto makeUserDto(Long id, String name, String email, String birthdate,
             String createdAt) {
 
-        UserEntity user = new UserEntity();
+        UserDto user = new UserDto();
 
         user.setId(id);
         user.setName(name);
         user.setEmail(email);
-        user.setBirthdate(birthdate == null
-                ? null
-                : LocalDate.parse(birthdate));
+        user.setBirthdate(birthdate == null ? null : LocalDate.parse(birthdate));
         user.setCreatedAt(OffsetDateTime.parse(createdAt));
 
         return user;

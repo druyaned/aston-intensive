@@ -1,28 +1,15 @@
 package druyaned.aston.intensive.userservice.notify;
 
-import java.util.HashMap;
-import java.util.Map;
-import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.admin.NewTopic;
-import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.TopicBuilder;
-import org.springframework.kafka.core.DefaultKafkaProducerFactory;
-import org.springframework.kafka.core.KafkaAdmin;
-import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.core.ProducerFactory;
-import org.springframework.kafka.support.serializer.JsonSerializer;
 
 @Configuration
 public class KafkaProducerConfig {
 
-    public static final String USER_EVENTS_TOPIC = "user.events";
-    public static final int PARTITIONS_COUNT = 12;
-    public static final int REPLICAS_COUNT = 2;
-
+    /*
     @Bean
     public KafkaAdmin kafkaAdmin(@Value("${kafka.brokers}") String kafkaBrokers) {
         Map<String, Object> configProps = new HashMap<>();
@@ -51,13 +38,19 @@ public class KafkaProducerConfig {
 
         return new KafkaTemplate<>(producerFactory);
     }
+    */
 
     @Bean
-    public NewTopic userEventsTopic() {
+    public NewTopic userEventsTopic(@Value("${topics.userEvents.name}") String userEventsTopic,
+            @Value("${topics.userEvents.partitionsCount}") int partitionsCount,
+            @Value("${topics.userEvents.replicasCount}") int replicasCount) {
+
+        System.out.println("userEventsTopic=" + userEventsTopic);// TODO: debug
+
         return TopicBuilder
-                .name(USER_EVENTS_TOPIC)
-                .partitions(PARTITIONS_COUNT)
-                .replicas(REPLICAS_COUNT)
+                .name(userEventsTopic)
+                .partitions(partitionsCount)
+                .replicas(replicasCount)
                 .build();
     }
 }

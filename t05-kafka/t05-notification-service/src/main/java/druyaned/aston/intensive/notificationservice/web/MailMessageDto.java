@@ -1,5 +1,10 @@
 package druyaned.aston.intensive.notificationservice.web;
 
+/**
+ * Data Transfer Object for the {@link SendMailController} that wraps email and message.
+ *
+ * @author druyaned
+ */
 public class MailMessageDto {
 
     private String email;

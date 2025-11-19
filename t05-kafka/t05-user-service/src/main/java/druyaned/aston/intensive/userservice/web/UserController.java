@@ -1,17 +1,16 @@
 package druyaned.aston.intensive.userservice.web;
 
-import druyaned.aston.intensive.userservice.model.UserMapper;
 import druyaned.aston.intensive.userservice.model.UserDto;
-import druyaned.aston.intensive.userservice.model.UserEntity;
-import static druyaned.aston.intensive.userservice.notify.KafkaProducerConfig.USER_EVENTS_TOPIC;
 import druyaned.aston.intensive.userservice.notify.UserEvent;
-import druyaned.aston.intensive.userservice.repo.UserRepository;
+import druyaned.aston.intensive.userservice.serve.UserService;
+import druyaned.aston.intensive.userservice.serve.UserService.Result;
+import static druyaned.aston.intensive.userservice.serve.UserService.Result.Type.FOUND;
+import static druyaned.aston.intensive.userservice.serve.UserService.Result.Type.NOT_CREATED;
+import static druyaned.aston.intensive.userservice.serve.UserService.Result.Type.NOT_FOUND;
 import jakarta.validation.Valid;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-import org.springframework.data.domain.Page;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,59 +30,46 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 @RequestMapping("/user-service")
 public class UserController {
 
-    private final UserRepository userRepo;
+    private final UserService userService;
     private final KafkaTemplate<String, UserEvent> kafkaTemplate;
+    private final String userEventsTopic;
 
-    public UserController(UserRepository userRepo,
-            KafkaTemplate<String, UserEvent> kafkaTemplate) {
+    public UserController(UserService userService, KafkaTemplate<String, UserEvent> kafkaTemplate,
+            @Value("${topics.userEvents.name}") String userEventsTopic) {
 
-        this.userRepo = userRepo;
+        this.userService = userService;
         this.kafkaTemplate = kafkaTemplate;
+        this.userEventsTopic = userEventsTopic;
     }
-
 
     @GetMapping("/users")
     public ResponseEntity<List<UserDto>> getAll(Pageable pageable) {
-        Page<UserEntity> page = userRepo.findAll(pageable);
-
-        List<UserDto> userList = page.stream().collect(ArrayList::new,
-                (list, user) -> list.add(UserMapper.dtoFromEntity(user)),
-                ArrayList::addAll);
-
-        return ResponseEntity.ok(userList);
+        return ResponseEntity.ok(userService.getAll(pageable).content());
     }
 
     @GetMapping("/user/{id}")
     public ResponseEntity<UserDto> get(@PathVariable Long id) {
-        Optional<UserEntity> userOpt = userRepo.findById(id);
+        Result<UserDto> result = userService.get(id);
 
-        return userOpt.isPresent()
-                ? ResponseEntity.ok(UserMapper.dtoFromEntity(userOpt.get()))
+        return result.type() == FOUND
+                ? ResponseEntity.ok(result.content())
                 : ResponseEntity.notFound().build();
     }
 
     @PostMapping("/create")
     public ResponseEntity<String> create(
-            // @Valid invokes the validation and if it fails,
-            // MethodArgumentNotValidException is thrown. By default Spring
-            // translates MethodArgumentNotValidException into bad request
-            // (HTTP 400)
+            // @Valid invokes the validation and if it fails, MethodArgumentNotValidException
+            // is thrown. By default Spring translates MethodArgumentNotValidException into bad
+            // request (HTTP 400)
             @Valid @RequestBody UserDto userDto) {
 
-        // Case when the email has already been existed in the database should
-        // be handled manually to return bad request (HTTP 400), not to throw
-        // any exception and not to use an ExceptionHandler
-        if (userRepo.existsByEmail(userDto.getEmail())) {
-            String message = "Email \"" + userDto.getEmail() + "\" exists";
-            return ResponseEntity.badRequest().body(message);
+        Result<UserDto> result = userService.create(userDto);
+
+        if (result.type() == NOT_CREATED) {
+            return ResponseEntity.badRequest().body(result.message());
         }
 
-        UserEntity user = UserMapper.entityFromDto(userDto);
-        UserEntity savedUser = userRepo.save(user);
-
-        kafkaTemplate.send(USER_EVENTS_TOPIC,
-                user.getEmail(), // email key
-                new UserEvent(UserEvent.Type.CREATE, user.getId()));
+        UserDto savedUser = result.content();
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequestUri()
@@ -92,53 +78,42 @@ public class UserController {
                 .buildAndExpand(savedUser.getId())
                 .toUri();
 
-        return ResponseEntity.created(location).body("Created");
+        kafkaTemplate.send(userEventsTopic, savedUser.getEmail(),
+                new UserEvent(UserEvent.Type.CREATE, savedUser.getId()));
+
+        return ResponseEntity.created(location).body(result.message());
     }
 
     @PutMapping("/update/{id}")
-    public ResponseEntity<String> update(
-            @PathVariable Long id,
+    public ResponseEntity<String> update(@PathVariable Long id,
             @Valid @RequestBody UserDto userDto) {
 
-        Optional<UserEntity> userOpt = userRepo.findById(id);
-        if (userOpt.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
+        Result<UserDto> result = userService.update(id, userDto);
 
-        UserEntity user = userOpt.get();
-
-        // Case when the email is not equal to the current email of the user
-        // and has already been existed in the database should be handled
-        // manually to return bad request (HTTP 400), not to throw any exception
-        // and not to use an ExceptionHandler
-        String email = userDto.getEmail();
-        if (!email.equals(user.getEmail()) && userRepo.existsByEmail(email)) {
-            String message = "Email \"" + email + "\" exists";
-            return ResponseEntity.badRequest().body(message);
-        }
-
-        UserMapper.setEntityByDto(user, userDto);
-        userRepo.save(user);
-
-        return ResponseEntity.ok("Updated");
+        return switch (result.type()) {
+            case UPDATED ->
+                ResponseEntity.ok(result.message());
+            case NOT_FOUND ->
+                ResponseEntity.notFound().build();
+            case NOT_UPDATED ->
+                ResponseEntity.badRequest().body(result.message());
+            default ->
+                throw new IllegalStateException("Unknown result type");
+        };
     }
 
     @DeleteMapping("/delete/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public ResponseEntity<String> delete(@PathVariable Long id) {
-        Optional<UserEntity> userOpt = userRepo.findById(id);
+        Result<UserDto> result = userService.delete(id);
 
-        if (userOpt.isEmpty()) {
+        if (result.type() == NOT_FOUND) {
             return ResponseEntity.notFound().build();
         }
 
-        ResponseEntity<String> response = ResponseEntity.ok("Deleted");
-        userRepo.deleteById(id);
+        kafkaTemplate.send(userEventsTopic, result.content().getEmail(),
+                new UserEvent(UserEvent.Type.CREATE, result.content().getId()));
 
-        kafkaTemplate.send(USER_EVENTS_TOPIC,
-                userOpt.get().getEmail(), // email key
-                new UserEvent(UserEvent.Type.DELETE, id));
-
-        return response;
+        return ResponseEntity.ok(result.message());
     }
 }

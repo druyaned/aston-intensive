@@ -9,6 +9,7 @@ import jakarta.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.Objects;
 
 public class UserDto implements Serializable {
 
@@ -16,8 +17,7 @@ public class UserDto implements Serializable {
 
     private Long id;
 
-    @NotNull(message = "Name can not be null")
-    @NotBlank
+    @NotBlank(message = "Name must not be blank")
     @Size(min = 2, max = 127, message = "Name length should be in [2, 127]")
     private String name;
 
@@ -74,6 +74,44 @@ public class UserDto implements Serializable {
 
     public void setCreatedAt(OffsetDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 61 * hash + Objects.hashCode(this.id);
+        hash = 61 * hash + Objects.hashCode(this.name);
+        hash = 61 * hash + Objects.hashCode(this.email);
+        hash = 61 * hash + Objects.hashCode(this.birthdate);
+        hash = 61 * hash + Objects.hashCode(this.createdAt);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final UserDto other = (UserDto) obj;
+        if (!Objects.equals(this.name, other.name)) {
+            return false;
+        }
+        if (!Objects.equals(this.email, other.email)) {
+            return false;
+        }
+        if (!Objects.equals(this.id, other.id)) {
+            return false;
+        }
+        if (!Objects.equals(this.birthdate, other.birthdate)) {
+            return false;
+        }
+        return Objects.equals(this.createdAt, other.createdAt);
     }
 
     @Override

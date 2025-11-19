@@ -37,8 +37,8 @@ public class UserRepositoryTest {
 
     @Test
     public void findAllUsersAndCheckTheSize() {
-        Stream<UserEntity> userStream = StreamSupport.stream(
-                userRepo.findAll().spliterator(), false);
+        Stream<UserEntity> userStream = StreamSupport.stream(userRepo.findAll().spliterator(),
+                false);
         assertEquals(6L, userStream.count());
     }
 

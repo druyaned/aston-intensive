@@ -46,12 +46,12 @@ public class UserDtoValidationTest {
 
         Set<ConstraintViolation<UserDto>> violations = validator.validate(userDto);
 
-        assertEquals(2, violations.size());
+        assertEquals(1, violations.size());
 
         ConstraintViolation<UserDto> violation = violations.iterator().next();
 
         assertEquals("name", violation.getPropertyPath().toString());
-        assertEquals("Name can not be null", violation.getMessage());
+        assertEquals("Name must not be blank", violation.getMessage());
     }
 
     @Test
