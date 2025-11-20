@@ -91,14 +91,10 @@ public class UserController {
         Result<UserDto> result = userService.update(id, userDto);
 
         return switch (result.type()) {
-            case UPDATED ->
-                ResponseEntity.ok(result.message());
-            case NOT_FOUND ->
-                ResponseEntity.notFound().build();
-            case NOT_UPDATED ->
-                ResponseEntity.badRequest().body(result.message());
-            default ->
-                throw new IllegalStateException("Unknown result type");
+            case UPDATED -> ResponseEntity.ok(result.message());
+            case NOT_FOUND -> ResponseEntity.notFound().build();
+            case NOT_UPDATED -> ResponseEntity.badRequest().body(result.message());
+            default -> throw new IllegalStateException("Unknown result type");
         };
     }
 
