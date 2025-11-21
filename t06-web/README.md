@@ -6,7 +6,7 @@
 
 1. Задокументировать существующее API (из t04-spring) с помощью Swagger (Springdoc OpenAPI), чтобы
 можно было легко изучить и тестировать API через веб-интерфейс
-1. Добавить поддержку HATEOAS, чтобы API предоставляло ссылки для навигации по ресурсам
+2. Добавить поддержку HATEOAS, чтобы API предоставляло ссылки для навигации по ресурсам
 
 ## Выполнение
 
@@ -28,12 +28,12 @@
 ## Запуск
 
 1. База данных PostgreSQL должна быть установлена и Docker запущен
-1. Следовать инструкциям из `src/main/resources/db-create.sql`
-1. Компиляция и запуск:
+2. Следовать инструкциям из `src/main/resources/db-create.sql`
+3. Компиляция и запуск:
 ```
 $ mvn clean install; mvn spring-boot:run
 ```
-1. Выполнить несколько запросов:
+4. Выполнить несколько запросов:
 ```
 # Find all users
 curl -X GET http://localhost:8085/user-service/users
@@ -53,4 +53,4 @@ http://localhost:8085/user-service/update/ID
 # IMPORTANT: change ID at the end of the request
 curl -X DELETE http://localhost:8085/user-service/delete/ID
 ```
-1. Остановить приложение можно с помощью `Ctrl+C`
+5. Остановить приложение можно с помощью `Ctrl+C`
