@@ -9,7 +9,8 @@ import druyaned.aston.intensive.userservice.serve.UserService;
 import druyaned.aston.intensive.userservice.serve.UserService.Result;
 import static druyaned.aston.intensive.userservice.serve.UserService.Result.Type.CREATED;
 import static druyaned.aston.intensive.userservice.serve.UserService.Result.Type.DELETED;
-import static druyaned.aston.intensive.userservice.serve.UserService.Result.Type.NOT_UPDATED;
+import static druyaned.aston.intensive.userservice.serve.UserService.Result.Type.EMAIL_DUPLICATION;
+import static druyaned.aston.intensive.userservice.serve.UserService.Result.Type.FOUND;
 import static druyaned.aston.intensive.userservice.serve.UserService.Result.Type.UPDATED;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -68,7 +69,7 @@ public class UserControllerTest {
     @Test
     public void getAllShouldReturnOkAndAllUsers() throws Exception {
         List<UserDto> userDtoList = makeUserDtoList();
-        Result<List<UserDto>> result = new Result<>(Result.Type.FOUND, "", userDtoList);
+        Result<List<UserDto>> result = new Result<>(FOUND, "", userDtoList);
 
         when(userService.getAll(any(Pageable.class))).thenReturn(result);
 
@@ -128,7 +129,7 @@ public class UserControllerTest {
     @Test
     public void getShouldReturnOkAndUserEntity() throws Exception {
         UserDto userDto = makeUserDto();
-        Result<UserDto> result = new Result<>(Result.Type.FOUND, "", userDto);
+        Result<UserDto> result = new Result<>(FOUND, "", userDto);
 
         when(userService.get(anyLong())).thenReturn(result);
 
@@ -144,7 +145,7 @@ public class UserControllerTest {
     @Test
     public void createByExistingEmailShouldReturnBadRequest() throws Exception {
         UserDto userDto = makeUserDto();
-        Result<UserDto> result = new Result<>(Result.Type.NOT_CREATED, "", null);
+        Result<UserDto> result = new Result<>(EMAIL_DUPLICATION, "", null);
 
         when(userService.create(any(UserDto.class))).thenReturn(result);
 
@@ -200,7 +201,7 @@ public class UserControllerTest {
     @Test
     public void updateByExistingEmailShouldReturnBadRequest() throws Exception {
         UserDto userDto = makeUserDto();
-        Result<UserDto> result = new Result<>(NOT_UPDATED, "", null);
+        Result<UserDto> result = new Result<>(EMAIL_DUPLICATION, "", null);
 
         when(userService.update(anyLong(), any(UserDto.class))).thenReturn(result);
 

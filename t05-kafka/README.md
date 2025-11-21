@@ -62,7 +62,6 @@
 ```
 addr=<YOUR_EMAIL_ADDRESS>
 pass=<YOUR_APPLICATION_PASSWORD>
-
 ```
 1. Docker image apache/kafka:4.1.0 должен быть установлен
 1. Перейти в директорию kafka-cluster и выполнить команду в консоли:

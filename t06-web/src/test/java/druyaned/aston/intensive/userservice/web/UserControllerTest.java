@@ -1,6 +1,7 @@
 package druyaned.aston.intensive.userservice.web;
 
-import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import druyaned.aston.intensive.userservice.model.UserDto;
@@ -8,27 +9,30 @@ import druyaned.aston.intensive.userservice.serve.UserService;
 import druyaned.aston.intensive.userservice.serve.UserService.Result;
 import static druyaned.aston.intensive.userservice.serve.UserService.Result.Type.CREATED;
 import static druyaned.aston.intensive.userservice.serve.UserService.Result.Type.DELETED;
-import static druyaned.aston.intensive.userservice.serve.UserService.Result.Type.NOT_UPDATED;
+import static druyaned.aston.intensive.userservice.serve.UserService.Result.Type.EMAIL_DUPLICATION;
+import static druyaned.aston.intensive.userservice.serve.UserService.Result.Type.FOUND;
 import static druyaned.aston.intensive.userservice.serve.UserService.Result.Type.UPDATED;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -43,10 +47,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
+/**
+ * Step#08: changing test of modified methods in {@link UserController}, also a mock bean of
+ * {@link UserModelAssembler} is added.
+ *
+ * @author druyaned
+ * @see UserController
+ */
 @WebMvcTest(UserController.class)
 public class UserControllerTest {
 
     private static ObjectMapper objectMapper;
+    private static final MediaType HAL_JSON = MediaType.parseMediaType("application/hal+json");
 
     @Autowired
     private MockMvc mockMvc;
@@ -54,40 +66,60 @@ public class UserControllerTest {
     @MockitoBean
     private UserService userService;
 
+    @MockitoBean
+    private UserModelAssembler userModelAssembler;
+
     @BeforeAll
     public static void setUpTestClass() {
         objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
     @Test
     public void getAllShouldReturnOkAndAllUsers() throws Exception {
         List<UserDto> userDtoList = makeUserDtoList();
-        Result<List<UserDto>> result = new Result<>(Result.Type.FOUND, "", userDtoList);
+        Result<List<UserDto>> result = new Result<>(FOUND, "", userDtoList);
+        CollectionModel<EntityModel<UserDto>> collectionModel = new UserModelAssembler()
+                .toCollectionModel(userDtoList);
 
         when(userService.getAll(any(Pageable.class))).thenReturn(result);
+        when(userModelAssembler.toCollectionModel(anyList())).thenReturn(collectionModel);
 
         MockHttpServletResponse response = mockMvc
-                .perform(get("/user-service/users"))
+                .perform(get("/user-service/users").accept(HAL_JSON))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType(HAL_JSON))
                 .andReturn()
                 .getResponse();
 
         verify(userService).getAll(any(Pageable.class));
+        verify(userModelAssembler).toCollectionModel(anyList());
 
-        TypeReference<List<UserDto>> typeReference = new TypeReference<List<UserDto>>() {
-        };
-        List<UserDto> responseUsers = objectMapper.readValue(response.getContentAsString(),
-                typeReference);
+        JsonNode root = objectMapper.readTree(response.getContentAsString());
+        JsonNode embedded = root.path("_embedded");
 
-        assertEquals(userDtoList.size(), responseUsers.size());
+        JsonNode usersArray = null;
+        Iterator<String> fieldNames = embedded.fieldNames();
+        if (embedded.isObject() && fieldNames.hasNext()) {
+            usersArray = embedded.path(fieldNames.next());
+        }
+
+        List<UserDto> responseUserDtoList = new ArrayList<>();
+        if (usersArray != null && usersArray.isArray()) {
+            for (JsonNode userNode : usersArray) {
+                UserDto userDto = objectMapper.readValue(userNode.toString(), UserDto.class);
+                responseUserDtoList.add(userDto);
+            }
+        }
 
         for (UserDto userDto : userDtoList) {
             OffsetDateTime createdAt = userDto.getCreatedAt();
             userDto.setCreatedAt(createdAt.withOffsetSameInstant(ZoneOffset.UTC));
         }
-        assertTrue(userDtoList.containsAll(responseUsers));
+
+        assertEquals(userDtoList.size(), responseUserDtoList.size());
+        assertTrue(responseUserDtoList.containsAll(userDtoList));
     }
 
     private List<UserDto> makeUserDtoList() {
@@ -115,31 +147,36 @@ public class UserControllerTest {
 
         when(userService.get(anyLong())).thenReturn(result);
 
-        mockMvc.perform(get("/user-service/user/1")).andExpect(status().isNotFound());
+        mockMvc.perform(get("/user-service/user/1").accept(HAL_JSON))
+                .andExpect(status().isNotFound());
 
         verify(userService).get(anyLong());
+        verify(userModelAssembler, never()).toModel(any(UserDto.class));
     }
 
     @Test
     public void getShouldReturnOkAndUserEntity() throws Exception {
         UserDto userDto = makeUserDto();
-        Result<UserDto> result = new Result<>(Result.Type.FOUND, "", userDto);
+        Result<UserDto> result = new Result<>(FOUND, "", userDto);
+        EntityModel<UserDto> entityModel = new UserModelAssembler().toModel(userDto);
 
         when(userService.get(anyLong())).thenReturn(result);
+        when(userModelAssembler.toModel(any(UserDto.class))).thenReturn(entityModel);
 
-        mockMvc.perform(get("/user-service/user/" + userDto.getId()))
+        mockMvc.perform(get("/user-service/user/" + userDto.getId()).accept(HAL_JSON))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType(HAL_JSON))
                 .andExpect(jsonPath("$.name").value(userDto.getName()))
                 .andExpect(jsonPath("$.email").value(userDto.getEmail()));
 
         verify(userService).get(anyLong());
+        verify(userModelAssembler).toModel(any(UserDto.class));
     }
 
     @Test
     public void createByExistingEmailShouldReturnBadRequest() throws Exception {
         UserDto userDto = makeUserDto();
-        Result<UserDto> result = new Result<>(Result.Type.NOT_CREATED, "", null);
+        Result<UserDto> result = new Result<>(EMAIL_DUPLICATION, "", null);
 
         when(userService.create(any(UserDto.class))).thenReturn(result);
 
@@ -190,7 +227,7 @@ public class UserControllerTest {
     @Test
     public void updateByExistingEmailShouldReturnBadRequest() throws Exception {
         UserDto userDto = makeUserDto();
-        Result<UserDto> result = new Result<>(NOT_UPDATED, "", null);
+        Result<UserDto> result = new Result<>(EMAIL_DUPLICATION, "", null);
 
         when(userService.update(anyLong(), any(UserDto.class))).thenReturn(result);
 

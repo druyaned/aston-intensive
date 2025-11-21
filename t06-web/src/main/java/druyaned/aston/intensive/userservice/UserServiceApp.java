@@ -10,7 +10,7 @@ import org.springframework.context.annotation.PropertySource;
  *
  * <p>
  * <b>Task requirements</b>:
- * <li>Document the existing API (from Task#04) using Swagger (Springdoc OpenAPI) so that you can
+ * <li>Document the existing API (from t04-spring) using Swagger (Springdoc OpenAPI) so that you can
  * easily explore and test the API through the web interface</li>
  * <li>Add HATEOAS support so that the API provides links for navigating through resources</li>
  *

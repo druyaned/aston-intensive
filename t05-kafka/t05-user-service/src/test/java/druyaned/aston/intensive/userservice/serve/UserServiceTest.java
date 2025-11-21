@@ -7,7 +7,11 @@ import druyaned.aston.intensive.userservice.model.UserDto;
 import druyaned.aston.intensive.userservice.model.UserEntity;
 import druyaned.aston.intensive.userservice.repo.UserRepository;
 import druyaned.aston.intensive.userservice.serve.UserService.Result;
-import druyaned.aston.intensive.userservice.serve.UserService.Result.Type;
+import static druyaned.aston.intensive.userservice.serve.UserService.Result.Type.CREATED;
+import static druyaned.aston.intensive.userservice.serve.UserService.Result.Type.DELETED;
+import static druyaned.aston.intensive.userservice.serve.UserService.Result.Type.EMAIL_DUPLICATION;
+import static druyaned.aston.intensive.userservice.serve.UserService.Result.Type.FOUND;
+import static druyaned.aston.intensive.userservice.serve.UserService.Result.Type.UPDATED;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -58,7 +62,7 @@ public class UserServiceTest {
         Pageable pageable = PageRequest.of(0, 10);
         Page<UserEntity> page = new PageImpl<>(users, pageable, users.size());
 
-        Result<List<UserDto>> expectedResult = new Result<>(Type.FOUND, "Users were found",
+        Result<List<UserDto>> expectedResult = new Result<>(FOUND, "Users were found",
                 page.stream().collect(ArrayList::new, (list, user)
                         -> list.add(UserConversion.dtoFromEntity(user)), ArrayList::addAll));
 
@@ -106,8 +110,8 @@ public class UserServiceTest {
     public void getShouldReturnOkAndUserEntity() throws Exception {
         UserEntity user = makeUser();
         UserDto userDto = UserConversion.dtoFromEntity(user);
-        Result<UserDto> expectedResult = new Result<>(Type.FOUND,
-                "User was found by ID=" + user.getId(), userDto);
+        Result<UserDto> expectedResult = new Result<>(FOUND, "User was found by ID=" + user.getId(),
+                userDto);
 
         when(userRepo.findById(user.getId())).thenReturn(Optional.of(user));
 
@@ -121,7 +125,7 @@ public class UserServiceTest {
     @Test
     public void createByExistingEmailShouldReturnBadRequest() throws Exception {
         UserDto userDto = UserConversion.dtoFromEntity(makeUser());
-        Result<UserDto> expectedResult = new Result<>(Type.NOT_CREATED,
+        Result<UserDto> expectedResult = new Result<>(EMAIL_DUPLICATION,
                 "Not created: email \"" + userDto.getEmail() + "\" exists", null);
 
         when(userRepo.existsByEmail(userDto.getEmail())).thenReturn(true);
@@ -138,8 +142,8 @@ public class UserServiceTest {
     public void createShouldReturnCreated() throws Exception {
         UserEntity savedUser = makeUser();
         UserDto userDto = UserConversion.dtoFromEntity(savedUser);
-        Result<UserDto> expectedResult = new Result<>(Type.CREATED,
-                "User was created by ID=" + savedUser.getId(), userDto);
+        Result<UserDto> expectedResult = new Result<>(CREATED, "User was created by ID="
+                + savedUser.getId(), userDto);
 
         when(userRepo.existsByEmail(userDto.getEmail())).thenReturn(false);
         when(userRepo.save(any(UserEntity.class))).thenReturn(savedUser);
@@ -176,8 +180,8 @@ public class UserServiceTest {
         String existingEmail = "existing@email.com";
         userDto.setEmail(existingEmail);
 
-        Result<UserDto> expectedResult = new Result<>(Type.NOT_UPDATED,
-                "Not updated: email \"" + existingEmail + " exists", null);
+        Result<UserDto> expectedResult = new Result<>(EMAIL_DUPLICATION, "Not updated: email \""
+                + existingEmail + " exists", null);
 
         when(userRepo.findById(userDto.getId())).thenReturn(Optional.of(user));
         when(userRepo.existsByEmail(existingEmail)).thenReturn(true);
@@ -199,8 +203,8 @@ public class UserServiceTest {
         String otherEmail = "other@email.com";
         userDto.setEmail(otherEmail);
 
-        Result<UserDto> expectedResult = new Result<>(Type.UPDATED,
-                "User with ID=" + userDto.getId() + " was updated", userDto);
+        Result<UserDto> expectedResult = new Result<>(UPDATED, "User with ID=" + userDto.getId()
+                + " was updated", userDto);
 
         when(userRepo.findById(userDto.getId())).thenReturn(Optional.of(user));
         when(userRepo.existsByEmail(otherEmail)).thenReturn(false);
@@ -234,8 +238,8 @@ public class UserServiceTest {
     public void deleteShouldReturnOk() throws Exception {
         UserEntity user = makeUser();
         UserDto userDto = UserConversion.dtoFromEntity(user);
-        Result<UserDto> expectedResult = new Result<>(Type.DELETED,
-                "User with ID=" + user.getId() + " was deleted", userDto);
+        Result<UserDto> expectedResult = new Result<>(DELETED, "User with ID=" + user.getId()
+                + " was deleted", userDto);
 
         when(userRepo.findById(user.getId())).thenReturn(Optional.of(user));
         doNothing().when(userRepo).deleteById(user.getId());

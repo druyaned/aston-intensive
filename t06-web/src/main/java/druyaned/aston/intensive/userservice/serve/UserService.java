@@ -7,10 +7,9 @@ import druyaned.aston.intensive.userservice.repo.UserRepository;
 import druyaned.aston.intensive.userservice.serve.UserService.Result.Type;
 import static druyaned.aston.intensive.userservice.serve.UserService.Result.Type.CREATED;
 import static druyaned.aston.intensive.userservice.serve.UserService.Result.Type.DELETED;
+import static druyaned.aston.intensive.userservice.serve.UserService.Result.Type.EMAIL_DUPLICATION;
 import static druyaned.aston.intensive.userservice.serve.UserService.Result.Type.FOUND;
-import static druyaned.aston.intensive.userservice.serve.UserService.Result.Type.NOT_CREATED;
 import static druyaned.aston.intensive.userservice.serve.UserService.Result.Type.NOT_FOUND;
-import static druyaned.aston.intensive.userservice.serve.UserService.Result.Type.NOT_UPDATED;
 import static druyaned.aston.intensive.userservice.serve.UserService.Result.Type.UPDATED;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,10 +42,7 @@ public class UserService {
          * @see UserService
          */
         public static enum Type {
-            FOUND, NOT_FOUND,
-            CREATED, NOT_CREATED,
-            UPDATED, NOT_UPDATED,
-            DELETED
+            FOUND, NOT_FOUND, EMAIL_DUPLICATION, CREATED, UPDATED, DELETED
         }
 
         public static <T> Result<T> notFound(Long id) {
@@ -90,17 +86,17 @@ public class UserService {
 
     /**
      * Creates user according to the given DTO and returns created-result with the user or
-     * not-created-result if email of the given DTO has already been stored.
+     * email-duplication-result if email of the given DTO has already been stored.
      *
      * @param userDto to create a new user
      *
-     * @return created-result with the user or not-created-result if email of the given DTO has
-     * already been stored
+     * @return created-result with the user or email-duplication-result if email of the given DTO
+     * has already been stored
      */
     public Result<UserDto> create(UserDto userDto) {
         // Case when the email has already been existed in the database should be handled manually
         if (userRepo.existsByEmail(userDto.getEmail())) {
-            return new Result<>(NOT_CREATED, "Not created: email \"" + userDto.getEmail()
+            return new Result<>(EMAIL_DUPLICATION, "Not created: email \"" + userDto.getEmail()
                     + "\" exists", null);
         }
 
@@ -112,15 +108,15 @@ public class UserService {
 
     /**
      * Updates an existing user by the ID and the given DTO, returns updated-result in case of
-     * update, not-found-result in case of ID absence, not-updated result if the email can't be
-     * stored (is not equal to the previous email and has already been presented).
+     * update, not-found-result in case of ID absence, email-duplication-result if the email can't
+     * be stored (is not equal to the previous email and has already been presented).
      *
      * @param id to found the user that should be updated
      * @param userDto to make an update according to this DTO
      *
-     * @return updated-result in case of update, not-found-result in case of ID absence, not-updated
-     * result if the email can't be stored (is not equal to the previous email and has already been
-     * presented)
+     * @return updated-result in case of update, not-found-result in case of ID absence,
+     * email-duplication-result if the email can't be stored (is not equal to the previous email and
+     * has already been presented)
      */
     public Result<UserDto> update(Long id, UserDto userDto) {
         Optional<UserEntity> userOpt = userRepo.findById(id);
@@ -135,7 +131,7 @@ public class UserService {
         // existed in the database should be handled manually
         String givenEmail = userDto.getEmail();
         if (!givenEmail.equals(user.getEmail()) && userRepo.existsByEmail(givenEmail)) {
-            return new Result<>(NOT_UPDATED, "Not updated: email \"" + givenEmail + " exists",
+            return new Result<>(EMAIL_DUPLICATION, "Not updated: email \"" + givenEmail + " exists",
                     null);
         }
 

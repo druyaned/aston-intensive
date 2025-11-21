@@ -3,14 +3,20 @@ package druyaned.aston.intensive.userservice.web;
 import druyaned.aston.intensive.userservice.model.UserDto;
 import druyaned.aston.intensive.userservice.serve.UserService;
 import druyaned.aston.intensive.userservice.serve.UserService.Result;
+import static druyaned.aston.intensive.userservice.serve.UserService.Result.Type.EMAIL_DUPLICATION;
 import static druyaned.aston.intensive.userservice.serve.UserService.Result.Type.FOUND;
-import static druyaned.aston.intensive.userservice.serve.UserService.Result.Type.NOT_CREATED;
 import static druyaned.aston.intensive.userservice.serve.UserService.Result.Type.NOT_FOUND;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.List;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,44 +25,79 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+/**
+ * Steps 4 and 7: swagger-annotations and userModelAssembler.
+ *
+ * <p>
+ * <ol>
+ * <li>Step#04: applying swagger-annotations to each method of the controller; annotations:
+ * {@link Tag}, {@link Operation}, {@link ApiResponse}, {@link ApiResponses}, {@link Parameter}.
+ * Other annotations would be redundant. For example, {@code @RequestBody UserDto userDto} -
+ * Springdoc sees {@code @RequestBody} and automatically generates description, schema,
+ * required=true, validation rules. Very convenient!</li>
+ * <li>Step#07: userModelAssembler bean is added; {@code getAll} and {@code get} methods are changed
+ * to return response entities of CollectionModel and EntityModel respectively. I don't touch
+ * {@code create}, {@code update} and {@code delete} methods here cause it's too excessive.
+ * Navigation through resources is mostly about reading and traversing.</li>
+ * </ol>
+ *
+ * @author druyaned
+ */
 @RestController
 @RequestMapping("/user-service")
+@Tag(name = "Users", description = "User management API")
 public class UserController {
 
     private final UserService userService;
+    private final UserModelAssembler userModelAssembler;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, UserModelAssembler userModelAssembler) {
         this.userService = userService;
+        this.userModelAssembler = userModelAssembler;
     }
 
     @GetMapping("/users")
-    public ResponseEntity<List<UserDto>> getAll(Pageable pageable) {
-        return ResponseEntity.ok(userService.getAll(pageable).content());
+    @Operation(summary = "Get all users",
+            description = "Returns a paged list of users with HATEOAS links")
+    @ApiResponse(responseCode = "200", description = "Users were found (possibly empty list)")
+    public ResponseEntity<CollectionModel<EntityModel<UserDto>>> getAll(
+            @Parameter(description = "Pagination parameters") Pageable pageable) {
+
+        Result<List<UserDto>> result = userService.getAll(pageable);
+
+        return ResponseEntity.ok(userModelAssembler.toCollectionModel(result.content()));
     }
 
     @GetMapping("/user/{id}")
-    public ResponseEntity<UserDto> get(@PathVariable Long id) {
+    @Operation(summary = "Get user by ID", description = "Returns single user with HATEOAS links")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "User was found"),
+        @ApiResponse(responseCode = "404", description = "User was not found")
+    })
+    public ResponseEntity<EntityModel<UserDto>> get(
+            @Parameter(description = "User ID", required = true) @PathVariable Long id) {
+
         Result<UserDto> result = userService.get(id);
 
         return result.type() == FOUND
-                ? ResponseEntity.ok(result.content())
+                ? ResponseEntity.ok(userModelAssembler.toModel(result.content()))
                 : ResponseEntity.notFound().build();
     }
 
     @PostMapping("/create")
-    public ResponseEntity<String> create(
-            // @Valid invokes the validation and if it fails, MethodArgumentNotValidException
-            // is thrown. By default Spring translates MethodArgumentNotValidException into bad
-            // request (HTTP 400)
-            @Valid @RequestBody UserDto userDto) {
+    @Operation(summary = "Create a new user")
+    @ApiResponses({
+        @ApiResponse(responseCode = "201", description = "User was created"),
+        @ApiResponse(responseCode = "400", description = "Email duplication or validation error")
+    })
+    public ResponseEntity<String> create(@Valid @RequestBody UserDto userDto) {
 
         Result<UserDto> result = userService.create(userDto);
 
-        if (result.type() == NOT_CREATED) {
+        if (result.type() == EMAIL_DUPLICATION) {
             return ResponseEntity.badRequest().body(result.message());
         }
 
@@ -73,21 +114,36 @@ public class UserController {
     }
 
     @PutMapping("/update/{id}")
-    public ResponseEntity<String> update(@PathVariable Long id,
+    @Operation(summary = "Update existing user")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "User was updated"),
+        @ApiResponse(responseCode = "400", description = "Email duplication or validation error"),
+        @ApiResponse(responseCode = "404", description = "User was not found")
+    })
+    public ResponseEntity<String> update(
+            @Parameter(description = "User ID", required = true) @PathVariable Long id,
             @Valid @RequestBody UserDto userDto) {
 
         Result<UserDto> result = userService.update(id, userDto);
 
         return switch (result.type()) {
-            case UPDATED -> ResponseEntity.ok(result.message());
-            case NOT_FOUND -> ResponseEntity.notFound().build();
-            case NOT_UPDATED -> ResponseEntity.badRequest().body(result.message());
-            default -> throw new IllegalStateException("Unknown result type");
+            case UPDATED ->
+                ResponseEntity.ok(result.message());
+            case NOT_FOUND ->
+                ResponseEntity.notFound().build();
+            case EMAIL_DUPLICATION ->
+                ResponseEntity.badRequest().body(result.message());
+            default ->
+                throw new IllegalStateException("Unknown result type");
         };
     }
 
     @DeleteMapping("/delete/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Delete existing user")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "User was deleted"),
+        @ApiResponse(responseCode = "404", description = "User was not found")
+    })
     public ResponseEntity<String> delete(@PathVariable Long id) {
         Result<UserDto> result = userService.delete(id);
 

@@ -3,7 +3,6 @@ package druyaned.aston.intensive.userservice.model;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Size;
 import java.io.Serializable;
@@ -27,7 +26,7 @@ public class UserDto implements Serializable {
             + "[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$")
     private String email;
 
-    @Past
+    @PastOrPresent
     private LocalDate birthdate;
 
     @PastOrPresent
