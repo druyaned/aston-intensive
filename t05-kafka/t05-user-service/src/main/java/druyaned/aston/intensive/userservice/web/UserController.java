@@ -4,8 +4,8 @@ import druyaned.aston.intensive.userservice.model.UserDto;
 import druyaned.aston.intensive.userservice.notify.UserEvent;
 import druyaned.aston.intensive.userservice.serve.UserService;
 import druyaned.aston.intensive.userservice.serve.UserService.Result;
+import static druyaned.aston.intensive.userservice.serve.UserService.Result.Type.EMAIL_DUPLICATION;
 import static druyaned.aston.intensive.userservice.serve.UserService.Result.Type.FOUND;
-import static druyaned.aston.intensive.userservice.serve.UserService.Result.Type.NOT_CREATED;
 import static druyaned.aston.intensive.userservice.serve.UserService.Result.Type.NOT_FOUND;
 import jakarta.validation.Valid;
 import java.net.URI;
@@ -65,7 +65,7 @@ public class UserController {
 
         Result<UserDto> result = userService.create(userDto);
 
-        if (result.type() == NOT_CREATED) {
+        if (result.type() == EMAIL_DUPLICATION) {
             return ResponseEntity.badRequest().body(result.message());
         }
 
@@ -93,7 +93,7 @@ public class UserController {
         return switch (result.type()) {
             case UPDATED -> ResponseEntity.ok(result.message());
             case NOT_FOUND -> ResponseEntity.notFound().build();
-            case NOT_UPDATED -> ResponseEntity.badRequest().body(result.message());
+            case EMAIL_DUPLICATION -> ResponseEntity.badRequest().body(result.message());
             default -> throw new IllegalStateException("Unknown result type");
         };
     }
@@ -108,7 +108,7 @@ public class UserController {
         }
 
         kafkaTemplate.send(userEventsTopic, result.content().getEmail(),
-                new UserEvent(UserEvent.Type.CREATE, result.content().getId()));
+                new UserEvent(UserEvent.Type.DELETE, result.content().getId()));
 
         return ResponseEntity.ok(result.message());
     }

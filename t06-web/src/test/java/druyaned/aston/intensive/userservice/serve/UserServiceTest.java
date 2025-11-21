@@ -110,8 +110,8 @@ public class UserServiceTest {
     public void getShouldReturnOkAndUserEntity() throws Exception {
         UserEntity user = makeUser();
         UserDto userDto = UserConversion.dtoFromEntity(user);
-        Result<UserDto> expectedResult = new Result<>(FOUND, "User was found by ID=" + user.getId(),
-                userDto);
+        Result<UserDto> expectedResult = new Result<>(FOUND,
+                "User was found by ID=" + user.getId(), userDto);
 
         when(userRepo.findById(user.getId())).thenReturn(Optional.of(user));
 
@@ -142,8 +142,8 @@ public class UserServiceTest {
     public void createShouldReturnCreated() throws Exception {
         UserEntity savedUser = makeUser();
         UserDto userDto = UserConversion.dtoFromEntity(savedUser);
-        Result<UserDto> expectedResult = new Result<>(CREATED, "User was created by ID="
-                + savedUser.getId(), userDto);
+        Result<UserDto> expectedResult = new Result<>(CREATED,
+                "User was created by ID=" + savedUser.getId(), userDto);
 
         when(userRepo.existsByEmail(userDto.getEmail())).thenReturn(false);
         when(userRepo.save(any(UserEntity.class))).thenReturn(savedUser);
@@ -180,8 +180,8 @@ public class UserServiceTest {
         String existingEmail = "existing@email.com";
         userDto.setEmail(existingEmail);
 
-        Result<UserDto> expectedResult = new Result<>(EMAIL_DUPLICATION, "Not updated: email \""
-                + existingEmail + " exists", null);
+        Result<UserDto> expectedResult = new Result<>(EMAIL_DUPLICATION,
+                "Not updated: email \"" + existingEmail + " exists", null);
 
         when(userRepo.findById(userDto.getId())).thenReturn(Optional.of(user));
         when(userRepo.existsByEmail(existingEmail)).thenReturn(true);
@@ -203,8 +203,8 @@ public class UserServiceTest {
         String otherEmail = "other@email.com";
         userDto.setEmail(otherEmail);
 
-        Result<UserDto> expectedResult = new Result<>(UPDATED, "User with ID=" + userDto.getId()
-                + " was updated", userDto);
+        Result<UserDto> expectedResult = new Result<>(UPDATED,
+                "User with ID=" + userDto.getId() + " was updated", userDto);
 
         when(userRepo.findById(userDto.getId())).thenReturn(Optional.of(user));
         when(userRepo.existsByEmail(otherEmail)).thenReturn(false);
@@ -238,8 +238,8 @@ public class UserServiceTest {
     public void deleteShouldReturnOk() throws Exception {
         UserEntity user = makeUser();
         UserDto userDto = UserConversion.dtoFromEntity(user);
-        Result<UserDto> expectedResult = new Result<>(DELETED, "User with ID=" + user.getId()
-                + " was deleted", userDto);
+        Result<UserDto> expectedResult = new Result<>(DELETED,
+                "User with ID=" + user.getId() + " was deleted", userDto);
 
         when(userRepo.findById(user.getId())).thenReturn(Optional.of(user));
         doNothing().when(userRepo).deleteById(user.getId());

@@ -1,39 +1,48 @@
 package druyaned.aston.intensive.userservice.model;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.PastOrPresent;
-import jakarta.validation.constraints.Size;
+import druyaned.aston.intensive.userservice.UserServiceApp;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.Objects;
 
-public class UserDto implements Serializable {
+/**
+ * Entity class according to the task#02 requirement: "entity User with fields:
+ * id, name, email, age, created_at". I asked to change the age by the
+ * birthdate. The suggestion was accepted. So this entity satisfies the
+ * conditions of the task and also implements Serializable interface for well
+ * known purposes. I also decided to add validation here using
+ * {@code hibernate-validator} dependency to avoid some wacky input.
+ *
+ * @author druyaned
+ * @see UserServiceApp
+ */
+@Entity
+@Table(name = "Users")
+public class UserEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "Name must not be blank")
-    @Size(min = 2, max = 127, message = "Name length should be in [2, 127]")
+    @Column(nullable = false, length = 127)
     private String name;
 
-    @NotNull(message = "Email can not be null")
-    @Email(regexp = "^(?=.{1,64}@.{4,255}$)"
-            + "[A-Za-z0-9_-]+(\\.[A-Za-z0-9_-]+)*@"
-            + "[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$")
+    @Column(nullable = false, unique = true, length = 320)
     private String email;
 
-    @PastOrPresent
     private LocalDate birthdate;
 
-    @PastOrPresent
+    @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
-
-    public UserDto() {
-    }
 
     public Long getId() {
         return id;
@@ -77,13 +86,7 @@ public class UserDto implements Serializable {
 
     @Override
     public int hashCode() {
-        int hash = 7;
-        hash = 61 * hash + Objects.hashCode(this.id);
-        hash = 61 * hash + Objects.hashCode(this.name);
-        hash = 61 * hash + Objects.hashCode(this.email);
-        hash = 61 * hash + Objects.hashCode(this.birthdate);
-        hash = 61 * hash + Objects.hashCode(this.createdAt);
-        return hash;
+        return id.hashCode();
     }
 
     @Override
@@ -97,25 +100,12 @@ public class UserDto implements Serializable {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final UserDto other = (UserDto) obj;
-        if (!Objects.equals(this.name, other.name)) {
-            return false;
-        }
-        if (!Objects.equals(this.email, other.email)) {
-            return false;
-        }
-        if (!Objects.equals(this.id, other.id)) {
-            return false;
-        }
-        if (!Objects.equals(this.birthdate, other.birthdate)) {
-            return false;
-        }
-        return Objects.equals(this.createdAt, other.createdAt);
+        return Objects.equals(this.id, ((UserEntity) obj).id);
     }
 
     @Override
     public String toString() {
-        return "UserDto{"
+        return "UserEntity{"
                 + "id=" + id
                 + ", name=" + name
                 + ", email=" + email

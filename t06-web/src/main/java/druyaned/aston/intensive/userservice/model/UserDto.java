@@ -97,6 +97,7 @@ public class UserDto implements Serializable {
         if (getClass() != obj.getClass()) {
             return false;
         }
+
         final UserDto other = (UserDto) obj;
         if (!Objects.equals(this.name, other.name)) {
             return false;
@@ -115,12 +116,7 @@ public class UserDto implements Serializable {
 
     @Override
     public String toString() {
-        return "UserDto{"
-                + "id=" + id
-                + ", name=" + name
-                + ", email=" + email
-                + ", birthdate=" + birthdate
-                + ", createdAt=" + createdAt
-                + '}';
+        return "UserDto{" + "id=" + id + ", name=" + name + ", email=" + email + ", birthdate="
+                + birthdate + ", createdAt=" + createdAt + '}';
     }
 }
