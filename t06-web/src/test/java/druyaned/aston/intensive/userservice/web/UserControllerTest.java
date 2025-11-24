@@ -79,11 +79,10 @@ public class UserControllerTest {
     @Test
     public void getAllShouldReturnOkAndAllUsers() throws Exception {
         List<UserDto> userDtoList = makeUserDtoList();
-        Result<List<UserDto>> result = new Result<>(FOUND, "", userDtoList);
         CollectionModel<EntityModel<UserDto>> collectionModel = new UserModelAssembler()
                 .toCollectionModel(userDtoList);
 
-        when(userService.getAll(any(Pageable.class))).thenReturn(result);
+        when(userService.getAll(any(Pageable.class))).thenReturn(userDtoList);
         when(userModelAssembler.toCollectionModel(anyList())).thenReturn(collectionModel);
 
         MockHttpServletResponse response = mockMvc
@@ -143,9 +142,9 @@ public class UserControllerTest {
     @Test
     public void getShouldReturnNotFound() throws Exception {
         Long id = 1L;
-        Result<UserDto> result = Result.notFound(id);
+        Result notFoundResult = Result.notFound(id);
 
-        when(userService.get(anyLong())).thenReturn(result);
+        when(userService.get(anyLong())).thenReturn(notFoundResult);
 
         mockMvc.perform(get("/user-service/user/1").accept(HAL_JSON))
                 .andExpect(status().isNotFound());
@@ -157,10 +156,10 @@ public class UserControllerTest {
     @Test
     public void getShouldReturnOkAndUserEntity() throws Exception {
         UserDto userDto = makeUserDto();
-        Result<UserDto> result = new Result<>(FOUND, "", userDto);
+        Result foundResult = Result.found(userDto);
         EntityModel<UserDto> entityModel = new UserModelAssembler().toModel(userDto);
 
-        when(userService.get(anyLong())).thenReturn(result);
+        when(userService.get(anyLong())).thenReturn(foundResult);
         when(userModelAssembler.toModel(any(UserDto.class))).thenReturn(entityModel);
 
         mockMvc.perform(get("/user-service/user/" + userDto.getId()).accept(HAL_JSON))
@@ -176,9 +175,9 @@ public class UserControllerTest {
     @Test
     public void createByExistingEmailShouldReturnBadRequest() throws Exception {
         UserDto userDto = makeUserDto();
-        Result<UserDto> result = new Result<>(EMAIL_DUPLICATION, "", null);
+        Result emailDuplicationResult = Result.emailDuplication(userDto.getEmail());
 
-        when(userService.create(any(UserDto.class))).thenReturn(result);
+        when(userService.create(any(UserDto.class))).thenReturn(emailDuplicationResult);
 
         mockMvc.perform(
                 post("/user-service/create")
@@ -192,10 +191,10 @@ public class UserControllerTest {
     @Test
     public void createShouldReturnCreated() throws Exception {
         UserDto userDto = makeUserDto();
-        Result<UserDto> result = new Result<>(CREATED, "", userDto);
+        Result createdResult = Result.created(userDto);
         String expectedLocation = "http://localhost/user-service/create/user/" + userDto.getId();
 
-        when(userService.create(any(UserDto.class))).thenReturn(result);
+        when(userService.create(any(UserDto.class))).thenReturn(createdResult);
 
         mockMvc.perform(
                 post("/user-service/create")
@@ -211,9 +210,9 @@ public class UserControllerTest {
     @Test
     public void updateByNonExistingIdShouldReturnNotFound() throws Exception {
         UserDto userDto = makeUserDto();
-        Result<UserDto> result = Result.notFound(userDto.getId());
+        Result notFoundResult = Result.notFound(userDto.getId());
 
-        when(userService.update(anyLong(), any(UserDto.class))).thenReturn(result);
+        when(userService.update(anyLong(), any(UserDto.class))).thenReturn(notFoundResult);
 
         mockMvc.perform(
                 put("/user-service/update/" + userDto.getId())
@@ -227,9 +226,9 @@ public class UserControllerTest {
     @Test
     public void updateByExistingEmailShouldReturnBadRequest() throws Exception {
         UserDto userDto = makeUserDto();
-        Result<UserDto> result = new Result<>(EMAIL_DUPLICATION, "", null);
+        Result emailDuplicationResult = Result.emailDuplication(userDto.getEmail());
 
-        when(userService.update(anyLong(), any(UserDto.class))).thenReturn(result);
+        when(userService.update(anyLong(), any(UserDto.class))).thenReturn(emailDuplicationResult);
 
         mockMvc.perform(
                 put("/user-service/update/" + userDto.getId())
@@ -243,9 +242,9 @@ public class UserControllerTest {
     @Test
     public void updateShouldReturnOk() throws Exception {
         UserDto userDto = makeUserDto();
-        Result<UserDto> result = new Result<>(UPDATED, "", userDto);
+        Result updatedResult = Result.updated(userDto);
 
-        when(userService.update(anyLong(), any(UserDto.class))).thenReturn(result);
+        when(userService.update(anyLong(), any(UserDto.class))).thenReturn(updatedResult);
 
         mockMvc.perform(
                 put("/user-service/update/" + userDto.getId())
@@ -259,9 +258,9 @@ public class UserControllerTest {
     @Test
     public void deleteByNonExistingIdShouldReturnNotFound() throws Exception {
         Long id = 2L;
-        Result<UserDto> result = Result.notFound(id);
+        Result notFoundResult = Result.notFound(id);
 
-        when(userService.delete(anyLong())).thenReturn(result);
+        when(userService.delete(anyLong())).thenReturn(notFoundResult);
 
         mockMvc.perform(delete("/user-service/delete/" + id))
                 .andExpect(status().isNotFound());
@@ -272,9 +271,9 @@ public class UserControllerTest {
     @Test
     public void deleteShouldReturnOk() throws Exception {
         UserDto userDto = makeUserDto();
-        Result<UserDto> result = new Result<>(DELETED, "", userDto);
+        Result DeletedResult = Result.deleted(userDto);
 
-        when(userService.delete(anyLong())).thenReturn(result);
+        when(userService.delete(anyLong())).thenReturn(DeletedResult);
 
         mockMvc.perform(delete("/user-service/delete/" + userDto.getId()))
                 .andExpect(status().isOk());

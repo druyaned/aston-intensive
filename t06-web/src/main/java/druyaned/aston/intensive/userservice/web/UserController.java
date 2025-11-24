@@ -62,46 +62,46 @@ public class UserController {
     @GetMapping("/users")
     @Operation(summary = "Get all users",
             description = "Returns a paged list of users with HATEOAS links")
-    @ApiResponse(responseCode = "200", description = "Users were found (possibly empty list)")
+    @ApiResponse(responseCode = "200", description = "Users are found (possibly empty list)")
     public ResponseEntity<CollectionModel<EntityModel<UserDto>>> getAll(
             @Parameter(description = "Pagination parameters") Pageable pageable) {
 
-        Result<List<UserDto>> result = userService.getAll(pageable);
+        List<UserDto> users = userService.getAll(pageable);
 
-        return ResponseEntity.ok(userModelAssembler.toCollectionModel(result.content()));
+        return ResponseEntity.ok(userModelAssembler.toCollectionModel(users));
     }
 
     @GetMapping("/user/{id}")
     @Operation(summary = "Get user by ID", description = "Returns single user with HATEOAS links")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "User was found"),
-        @ApiResponse(responseCode = "404", description = "User was not found")
+        @ApiResponse(responseCode = "200", description = "User is found"),
+        @ApiResponse(responseCode = "404", description = "User is not found")
     })
     public ResponseEntity<EntityModel<UserDto>> get(
             @Parameter(description = "User ID", required = true) @PathVariable Long id) {
 
-        Result<UserDto> result = userService.get(id);
+        Result getResult = userService.get(id);
 
-        return result.type() == FOUND
-                ? ResponseEntity.ok(userModelAssembler.toModel(result.content()))
+        return getResult.type() == FOUND
+                ? ResponseEntity.ok(userModelAssembler.toModel(getResult.content()))
                 : ResponseEntity.notFound().build();
     }
 
     @PostMapping("/create")
     @Operation(summary = "Create a new user")
     @ApiResponses({
-        @ApiResponse(responseCode = "201", description = "User was created"),
+        @ApiResponse(responseCode = "201", description = "User is created"),
         @ApiResponse(responseCode = "400", description = "Email duplication or validation error")
     })
     public ResponseEntity<String> create(@Valid @RequestBody UserDto userDto) {
 
-        Result<UserDto> result = userService.create(userDto);
+        Result createResult = userService.create(userDto);
 
-        if (result.type() == EMAIL_DUPLICATION) {
-            return ResponseEntity.badRequest().body(result.message());
+        if (createResult.type() == EMAIL_DUPLICATION) {
+            return ResponseEntity.badRequest().body(createResult.message());
         }
 
-        UserDto savedUser = result.content();
+        UserDto savedUser = createResult.content();
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequestUri()
@@ -110,47 +110,43 @@ public class UserController {
                 .buildAndExpand(savedUser.getId())
                 .toUri();
 
-        return ResponseEntity.created(location).body(result.message());
+        return ResponseEntity.created(location).body(createResult.message());
     }
 
     @PutMapping("/update/{id}")
     @Operation(summary = "Update existing user")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "User was updated"),
+        @ApiResponse(responseCode = "200", description = "User is updated"),
         @ApiResponse(responseCode = "400", description = "Email duplication or validation error"),
-        @ApiResponse(responseCode = "404", description = "User was not found")
+        @ApiResponse(responseCode = "404", description = "User is not found")
     })
     public ResponseEntity<String> update(
             @Parameter(description = "User ID", required = true) @PathVariable Long id,
             @Valid @RequestBody UserDto userDto) {
 
-        Result<UserDto> result = userService.update(id, userDto);
+        Result updateResult = userService.update(id, userDto);
 
-        return switch (result.type()) {
-            case UPDATED ->
-                ResponseEntity.ok(result.message());
-            case NOT_FOUND ->
-                ResponseEntity.notFound().build();
-            case EMAIL_DUPLICATION ->
-                ResponseEntity.badRequest().body(result.message());
-            default ->
-                throw new IllegalStateException("Unknown result type");
+        return switch (updateResult.type()) {
+            case UPDATED -> ResponseEntity.ok(updateResult.message());
+            case NOT_FOUND -> ResponseEntity.notFound().build();
+            case EMAIL_DUPLICATION -> ResponseEntity.badRequest().body(updateResult.message());
+            default -> throw new IllegalStateException("Unknown result type");
         };
     }
 
     @DeleteMapping("/delete/{id}")
     @Operation(summary = "Delete existing user")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "User was deleted"),
-        @ApiResponse(responseCode = "404", description = "User was not found")
+        @ApiResponse(responseCode = "200", description = "User is deleted"),
+        @ApiResponse(responseCode = "404", description = "User is not found")
     })
     public ResponseEntity<String> delete(@PathVariable Long id) {
-        Result<UserDto> result = userService.delete(id);
+        Result deleteResult = userService.delete(id);
 
-        if (result.type() == NOT_FOUND) {
+        if (deleteResult.type() == NOT_FOUND) {
             return ResponseEntity.notFound().build();
         }
 
-        return ResponseEntity.ok(result.message());
+        return ResponseEntity.ok(deleteResult.message());
     }
 }
