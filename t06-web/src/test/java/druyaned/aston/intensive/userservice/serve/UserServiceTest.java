@@ -7,17 +7,14 @@ import druyaned.aston.intensive.userservice.model.UserDto;
 import druyaned.aston.intensive.userservice.model.UserEntity;
 import druyaned.aston.intensive.userservice.repo.UserRepository;
 import druyaned.aston.intensive.userservice.serve.UserService.Result;
-import static druyaned.aston.intensive.userservice.serve.UserService.Result.Type.CREATED;
-import static druyaned.aston.intensive.userservice.serve.UserService.Result.Type.DELETED;
-import static druyaned.aston.intensive.userservice.serve.UserService.Result.Type.EMAIL_DUPLICATION;
-import static druyaned.aston.intensive.userservice.serve.UserService.Result.Type.FOUND;
-import static druyaned.aston.intensive.userservice.serve.UserService.Result.Type.UPDATED;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -62,17 +59,16 @@ public class UserServiceTest {
         Pageable pageable = PageRequest.of(0, 10);
         Page<UserEntity> page = new PageImpl<>(users, pageable, users.size());
 
-        Result<List<UserDto>> expectedResult = new Result<>(FOUND, "Users were found",
-                page.stream().collect(ArrayList::new, (list, user)
-                        -> list.add(UserConversion.dtoFromEntity(user)), ArrayList::addAll));
+        List<UserDto> expectedUserDtoList = page.stream().collect(ArrayList::new, (list, user)
+                -> list.add(UserConversion.dtoFromEntity(user)), ArrayList::addAll);
 
         when(userRepo.findAll(any(Pageable.class))).thenReturn(page);
 
-        Result<List<UserDto>> result = userService.getAll(pageable);
+        List<UserDto> actualUserDtoList = userService.getAll(pageable);
 
         verify(userRepo).findAll(any(Pageable.class));
 
-        assertEquals(expectedResult, result);
+        assertIterableEquals(expectedUserDtoList, actualUserDtoList);
     }
 
     private List<UserEntity> makeUsers() {
@@ -99,71 +95,68 @@ public class UserServiceTest {
 
         when(userRepo.findById(id)).thenReturn(Optional.empty());
 
-        Result<UserDto> result = userService.get(id);
+        Result getResult = userService.get(id);
 
         verify(userRepo).findById(1L);
 
-        assertEquals(Result.notFound(id), result);
+        assertEquals(Result.notFound(id), getResult);
     }
 
     @Test
     public void getShouldReturnOkAndUserEntity() throws Exception {
         UserEntity user = makeUser();
         UserDto userDto = UserConversion.dtoFromEntity(user);
-        Result<UserDto> expectedResult = new Result<>(FOUND, "User was found by ID=" + user.getId(),
-                userDto);
+        Result expectedResult = Result.found(userDto);
 
         when(userRepo.findById(user.getId())).thenReturn(Optional.of(user));
 
-        Result<UserDto> result = userService.get(user.getId());
+        Result actualResult = userService.get(user.getId());
 
         verify(userRepo).findById(user.getId());
 
-        assertEquals(expectedResult, result);
+        assertEquals(expectedResult, actualResult);
     }
 
     @Test
     public void createByExistingEmailShouldReturnBadRequest() throws Exception {
         UserDto userDto = UserConversion.dtoFromEntity(makeUser());
-        Result<UserDto> expectedResult = new Result<>(EMAIL_DUPLICATION,
-                "Not created: email \"" + userDto.getEmail() + "\" exists", null);
+        Result expectedResult = Result.emailDuplication(userDto.getEmail());
 
         when(userRepo.existsByEmail(userDto.getEmail())).thenReturn(true);
 
-        Result<UserDto> result = userService.create(userDto);
+        Result actualResult = userService.create(userDto);
 
         verify(userRepo).existsByEmail(userDto.getEmail());
         verify(userRepo, never()).save(any(UserEntity.class));
 
-        assertEquals(expectedResult, result);
+        assertEquals(expectedResult, actualResult);
     }
 
     @Test
     public void createShouldReturnCreated() throws Exception {
         UserEntity savedUser = makeUser();
         UserDto userDto = UserConversion.dtoFromEntity(savedUser);
-        Result<UserDto> expectedResult = new Result<>(CREATED, "User was created by ID="
-                + savedUser.getId(), userDto);
+        Result expectedResult = Result.created(userDto);
 
         when(userRepo.existsByEmail(userDto.getEmail())).thenReturn(false);
         when(userRepo.save(any(UserEntity.class))).thenReturn(savedUser);
 
-        Result<UserDto> result = userService.create(userDto);
+        Result actualResult = userService.create(userDto);
 
         verify(userRepo).existsByEmail(userDto.getEmail());
         verify(userRepo).save(any(UserEntity.class));
 
-        assertEquals(expectedResult, result);
+        assertEquals(expectedResult, actualResult);
     }
 
     @Test
     public void updateByNonExistingIdShouldReturnNotFound() throws Exception {
         UserDto userDto = UserConversion.dtoFromEntity(makeUser());
-        Result<UserDto> expectedResult = Result.notFound(userDto.getId());
+        Result expectedResult = Result.notFound(userDto.getId());
 
         when(userRepo.findById(userDto.getId())).thenReturn(Optional.empty());
 
-        Result<UserDto> result = userService.update(userDto.getId(), userDto);
+        Result result = userService.update(userDto.getId(), userDto);
 
         verify(userRepo).findById(userDto.getId());
         verify(userRepo, never()).existsByEmail(anyString());
@@ -180,19 +173,18 @@ public class UserServiceTest {
         String existingEmail = "existing@email.com";
         userDto.setEmail(existingEmail);
 
-        Result<UserDto> expectedResult = new Result<>(EMAIL_DUPLICATION, "Not updated: email \""
-                + existingEmail + " exists", null);
+        Result expectedResult = Result.emailDuplication(existingEmail);
 
         when(userRepo.findById(userDto.getId())).thenReturn(Optional.of(user));
         when(userRepo.existsByEmail(existingEmail)).thenReturn(true);
 
-        Result<UserDto> result = userService.update(userDto.getId(), userDto);
+        Result actualResult = userService.update(userDto.getId(), userDto);
 
         verify(userRepo).findById(user.getId());
         verify(userRepo).existsByEmail(existingEmail);
         verify(userRepo, never()).save(any(UserEntity.class));
 
-        assertEquals(expectedResult, result);
+        assertEquals(expectedResult, actualResult);
     }
 
     @Test
@@ -203,53 +195,51 @@ public class UserServiceTest {
         String otherEmail = "other@email.com";
         userDto.setEmail(otherEmail);
 
-        Result<UserDto> expectedResult = new Result<>(UPDATED, "User with ID=" + userDto.getId()
-                + " was updated", userDto);
+        Result expectedResult = Result.updated(userDto);
 
         when(userRepo.findById(userDto.getId())).thenReturn(Optional.of(user));
         when(userRepo.existsByEmail(otherEmail)).thenReturn(false);
         when(userRepo.save(user)).thenReturn(user);
 
-        Result<UserDto> result = userService.update(userDto.getId(), userDto);
+        Result actualResult = userService.update(userDto.getId(), userDto);
 
         verify(userRepo).findById(user.getId());
         verify(userRepo).existsByEmail(otherEmail);
         verify(userRepo).save(user);
 
         assertEquals(otherEmail, user.getEmail());
-        assertEquals(expectedResult, result);
+        assertEquals(expectedResult, actualResult);
     }
 
     @Test
     public void deleteByNonExistingIdShouldReturnNotFound() throws Exception {
         Long id = 2L;
-        Result<UserDto> expectedResult = Result.notFound(id);
+        Result expectedResult = Result.notFound(id);
 
         when(userRepo.findById(id)).thenReturn(Optional.empty());
 
-        Result<UserDto> result = userService.delete(id);
+        Result actualResult = userService.delete(id);
 
         verify(userRepo).findById(id);
 
-        assertEquals(expectedResult, result);
+        assertEquals(expectedResult, actualResult);
     }
 
     @Test
     public void deleteShouldReturnOk() throws Exception {
         UserEntity user = makeUser();
         UserDto userDto = UserConversion.dtoFromEntity(user);
-        Result<UserDto> expectedResult = new Result<>(DELETED, "User with ID=" + user.getId()
-                + " was deleted", userDto);
+        Result expectedResult = Result.deleted(userDto);
 
         when(userRepo.findById(user.getId())).thenReturn(Optional.of(user));
         doNothing().when(userRepo).deleteById(user.getId());
 
-        Result<UserDto> result = userService.delete(user.getId());
+        Result actualResult = userService.delete(user.getId());
 
         verify(userRepo).findById(user.getId());
         verify(userRepo).deleteById(user.getId());
 
-        assertEquals(expectedResult, result);
+        assertEquals(expectedResult, actualResult);
     }
 
     private UserEntity makeUser() {
@@ -267,7 +257,7 @@ public class UserServiceTest {
         user.setBirthdate(birthdate == null
                 ? null
                 : LocalDate.parse(birthdate));
-        user.setCreatedAt(OffsetDateTime.parse(createdAt));
+        user.setCreatedAt(OffsetDateTime.parse(createdAt).withOffsetSameInstant(ZoneOffset.UTC));
 
         return user;
     }
