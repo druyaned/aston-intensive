@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+        https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>druyaned</groupId>
+    <artifactId>aston-intensive</artifactId>
+    <version>1.0</version>
+  </parent>
+
+  <groupId>druyaned</groupId>
+  <artifactId>t07-patterns-of-microservices</artifactId>
+  <version>1.0</version>
+
+  <name>Task#07 Microservice Architecture Patterns</name>
+  <packaging>pom</packaging>
+
+  <properties>
+  </properties>
+
+  <dependencyManagement>
+  </dependencyManagement>
+
+  <dependencies>
+  </dependencies>
+
+  <build>
+    <plugins>
+    </plugins>
+  </build>
+
+  <modules>
+    <module>t07-user-events</module>
+    <module>t07-user-service</module>
+    <module>t07-notification-service</module>
+  </modules>
+
+</project>
