@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+        https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
@@ -17,7 +17,7 @@
   <version>1.0</version>
 
   <name>Aston Intensive</name>
-  <description>Task completing of the Aston Intensive Course.</description>
+  <description>Task completing of Aston Intensive Course</description>
   <packaging>pom</packaging>
 
   <url/>
@@ -56,7 +56,7 @@
     <module>t03-testing</module>
     <module>t04-spring</module>
     <module>t05-kafka</module>
-    <module>t06-web</module>
+    <module>t07-patterns-of-microservices</module>
   </modules>
 
 </project>
