@@ -18,18 +18,25 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 /**
- * Prep#02: Integration tests for {@link KafkaAspect} class. Spring Boot implicitly uses
+ * Prep#02: integration tests for {@link KafkaAspect} class. Spring Boot implicitly uses
  * {@code @EnableAspectJAutoProxy}. But some auto-configurations are useless, e.g.
- * {@code DataSourceAutoConfiguration}, so they are disabled in the properties file.
+ * {@code DataSourceAutoConfiguration}, so they are disabled in the properties.
+ *
+ * <p>
+ * Step#15: activate test profile.
  *
  * @author druyaned
  */
-@SpringBootTest
-@TestPropertySource("classpath:/kafka-aspect-test.properties")
+@SpringBootTest(properties = "spring.autoconfigure.exclude="
+        + "org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration,"
+        + "org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration,"
+        + "org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration,"
+        + "org.springframework.boot.autoconfigure.hateoas.HypermediaAutoConfiguration")
+@ActiveProfiles("test")
 public class KafkaAspectTest {
 
     @MockitoBean

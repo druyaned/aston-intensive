@@ -13,12 +13,27 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.test.context.EmbeddedKafka;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-@SpringBootTest
-@TestPropertySource("classpath:/user-event-listener-test.properties")
+/**
+ * Integration tests of {@link UserEventListener}.
+ *
+ * <p>
+ * Step#15: activate test profile.
+ *
+ * @author druyaned
+ */
+@SpringBootTest(properties = {
+    "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}",
+    "spring.kafka.consumer.bootstrap-servers=${spring.embedded.kafka.brokers}",
+    "spring.kafka.producer.bootstrap-servers=${spring.embedded.kafka.brokers}",
+    "spring.kafka.producer.key-serializer=org.apache.kafka.common.serialization.StringSerializer",
+    "spring.kafka.producer.value-serializer="
+            + "org.springframework.kafka.support.serializer.JsonSerializer",
+})
 @EmbeddedKafka(topics = "${topics.userEvents.name}", partitions = 1)
+@ActiveProfiles("test")
 public class UserEventListenerTest {
 
     @Value("${topics.userEvents.name}")

@@ -30,6 +30,7 @@ import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -42,7 +43,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
+/**
+ * Integration tests of {@link UserController}.
+ *
+ * <p>
+ * Step#15: activate test profile.
+ *
+ * @author druyaned
+ */
 @WebMvcTest(UserController.class)
+@ActiveProfiles("test")
 public class UserControllerTest {
 
     private static ObjectMapper objectMapper;

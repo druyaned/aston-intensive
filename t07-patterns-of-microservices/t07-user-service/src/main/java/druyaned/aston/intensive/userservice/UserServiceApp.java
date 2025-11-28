@@ -16,7 +16,6 @@ import org.springframework.context.annotation.PropertySource;
  */
 @SpringBootApplication
 @EntityScan("druyaned.aston.intensive.userservice.model")
-@PropertySource("classpath:/application.properties")
 @PropertySource("classpath:/db-connection.properties")
 public class UserServiceApp {
 

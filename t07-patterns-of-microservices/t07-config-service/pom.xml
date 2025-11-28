@@ -11,22 +11,29 @@
     <version>1.0</version>
   </parent>
 
-  <!-- Prep#03: separate dependency of UserEvent for Kafka (not in user-service) -->
   <groupId>druyaned</groupId>
-  <artifactId>t07-user-events</artifactId>
+  <artifactId>t07-config-service</artifactId>
   <version>1.0</version>
 
-  <name>Task#07 User Events</name>
+  <name>Task#07 Config Service</name>
   <packaging>jar</packaging>
 
   <properties>
-    <basePackage>druyaned.aston.intensive.userevents</basePackage>
+    <basePackage>druyaned.aston.intensive.configservice</basePackage>
   </properties>
 
-  <dependencyManagement>
-  </dependencyManagement>
-
   <dependencies>
+<!--     Step#10: dependency of Eureka Client
+    <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+    </dependency>-->
+
+    <!-- Step#12: dependency of Config Server -->
+    <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-config-server</artifactId>
+    </dependency>
   </dependencies>
 
   <build>

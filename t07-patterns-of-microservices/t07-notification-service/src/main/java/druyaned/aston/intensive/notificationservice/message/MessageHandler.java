@@ -3,9 +3,10 @@ package druyaned.aston.intensive.notificationservice.message;
 import druyaned.aston.intensive.notificationservice.consume.UserEventListener;
 
 /**
- * Servers to handle messages.
+ * Serves to handle messages.
  *
  * @author druyaned
+ *
  * @see UserEventListener
  */
 public interface MessageHandler {

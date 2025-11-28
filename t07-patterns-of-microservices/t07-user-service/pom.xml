@@ -26,13 +26,6 @@
   </dependencyManagement>
 
   <dependencies>
-    <!-- Prep#03: separate dependency of UserEvent -->
-    <dependency>
-      <groupId>druyaned</groupId>
-      <artifactId>t07-user-events</artifactId>
-      <version>1.0</version>
-    </dependency>
-
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -89,6 +82,25 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-hateoas</artifactId>
+    </dependency>
+
+    <!-- Prep#03: separate dependency of UserEvent for Kafka (not in user-service) -->
+    <dependency>
+      <groupId>druyaned</groupId>
+      <artifactId>t07-user-events</artifactId>
+      <version>1.0</version>
+    </dependency>
+
+    <!-- Step#10: dependency of Eureka Client registration -->
+    <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+    </dependency>
+
+    <!-- Step#14: dependency of Config Client -->
+    <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-config</artifactId>
     </dependency>
   </dependencies>
 

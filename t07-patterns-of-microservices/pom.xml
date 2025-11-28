@@ -22,6 +22,17 @@
   </properties>
 
   <dependencyManagement>
+    <!-- Step#02: addition of Spring Cloud BOM to manage versions of all compatible Spring Cloud
+      subproject dependencies -->
+    <dependencies>
+      <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-dependencies</artifactId>
+        <version>2025.0.0</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
   </dependencyManagement>
 
   <dependencies>
@@ -36,6 +47,11 @@
     <module>t07-user-events</module>
     <module>t07-user-service</module>
     <module>t07-notification-service</module>
+    <!-- Step#03: add API Gateway Service -->
+    <module>t07-api-gateway</module>
+    <!-- Step#08: add Dicovery Service -->
+    <module>t07-discovery-service</module>
+    <module>t07-config-service</module>
   </modules>
 
 </project>

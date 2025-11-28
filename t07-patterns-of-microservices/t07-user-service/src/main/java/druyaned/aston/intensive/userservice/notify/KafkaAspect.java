@@ -13,7 +13,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
 /**
- * Prep#01: Aspect encapsulates pointcuts (controller's create and delete methods) and advices (to
+ * Prep#01: aspect encapsulates pointcuts (controller's create and delete methods) and advices (to
  * send corresponding events by Kafka).
  *
  * @author druyaned

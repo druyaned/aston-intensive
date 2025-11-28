@@ -9,16 +9,34 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-@DataJpaTest
-@TestPropertySource("classpath:/user-repo-test.properties")
+/**
+ * Integration tests of {@link UserRepository}.
+ *
+ * <p>
+ * Step#15: activate test profile.
+ *
+ * @author druyaned
+ */
+@DataJpaTest(properties = {
+    // DB connection
+    "spring.datasource.driver-class-name=org.postgresql.Driver",
+    "spring.datasource.driver-class-name=org.postgresql.Driver",
+    // JPA and Hibernate config
+    "spring.jpa.hibernate.ddl-auto=create-drop",
+    "spring.jpa.defer-datasource-initialization=true",
+    "spring.jpa.show-sql=true",
+    "spring.sql.init.mode=always",
+    "spring.sql.init.data-locations=classpath:/data-test.sql"
+})
 @Testcontainers
+@ActiveProfiles("test")
 public class UserRepositoryTest {
 
     @Container

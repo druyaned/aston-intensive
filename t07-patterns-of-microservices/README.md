@@ -14,7 +14,20 @@
 `Step#[0-9][0-9]` (например `Step#01`) и `Prep#[0-9][0-9]` (например `Prep#01`) соответственно.
 
 1. Подготовка к выполнению (см. ниже)
-2. TODO: continue
+2. Дабавил `Spring Cloud BOM` (управлениe версиями подпроектов Spring Cloud)
+3. Написал `t07-api-gateway/pom.xml` и `ApiGatewayApp.java`
+4. Настроил `API Gateway`
+5. Добавил `Circuit Breaker` в `API Gateway`
+6. Настроил `Circuit Breaker` для `t07-user-service`
+7. Написал и настроил `FallbackController`
+8. Написал `t07-discovery-service/pom.xml` и `DiscoveryServiceApp.java`
+9. Настроил `Discovery Service` (a.k.a `Eureka Server`)
+10. Добавил клиентам зависимость `Eureka Client`
+11. Настроил у каждого клиента `Eureka Server Path`
+12. Написал `t07-config-service/pom.xml` и `ConfigServiceApp.java`
+13. Настроил `Config Service`
+14. Добавил клиентам зависимость `Config Client` и перенес их настройки
+15. Изменил тесты и их настройки в `t07-user-service` и `t07-notification-service`
 
 ## Подготовка к выполнению
 
@@ -41,33 +54,42 @@ pass=<YOUR_APPLICATION_PASSWORD>
 ```
 $ docker compose up -d
 ```
-6. После запуска двух докер-контейнеров (`kafka-1`, `kafka-2`), можно приступить к компиляции:
+6. После запуска двух докер-контейнеров (`kafka-1`, `kafka-2`), можно приступить к компиляции
+`t07-patterns-of-microservices`:
 ```
 $ mvn clean install
 ```
-7. Открыть новую вкладку консоли и перейти в `t07-user-service` и запустить приложение командой
-`mvn spring-boot:run`
-8. Открыть новую вкладку консоли и перейти в `t07-notification-service` и запустить приложение
-командой `mvn spring-boot:run`. Таким образом, запущены 2 kafka-контейнера и 2 приложения
-9. Выполнить несколько запросов:
+7. Последовательный запуск сервисов (`mvn spring-boot:run` в разных вкладках консоли, например):
+    1. `t07-config-service`
+    2. `t07-discovery-service`
+    3. `t07-user-service`
+    4. `t07-notification-service`
+    5. `t07-api-gateway`
+8. Выполнить запрос без `API Gateway`:
 ```
 # Find all users
 curl -X GET http://localhost:8085/user-service/users
+```
+9. Выполнить запросы через `API Gateway`:
+```
+# Find all users
+curl -X GET http://localhost:8082/user-service/users
 
 # Create Joe
 curl -X POST -H "Content-Type: application/json" \
 -d '{"name": "Joe", "email": "joe@example.com"}' \
-http://localhost:8085/user-service/create
+http://localhost:8082/user-service/create
 
 # Update Joe
 # IMPORTANT: change ID at the end of the request
 curl -X PUT -H "Content-Type: application/json" \
 -d '{"name": "Joe", "email": "joe@jmail.org", "birthdate": "2003-06-15"}' \
-http://localhost:8085/user-service/update/ID
+http://localhost:8082/user-service/update/ID
 
 # Delete Joe
 # IMPORTANT: change ID at the end of the request
-curl -X DELETE http://localhost:8085/user-service/delete/ID
+curl -X DELETE http://localhost:8082/user-service/delete/ID
 ```
-10. Остановить приложения можно с помощью `Ctrl+C`
-11. Остановить kafka-контейнеры можно, перейдя в `kafka-cluster`, выполнив `docker compose down -v`
+10. Eureka Dashboard: http://localhost:8761/dashboard
+11. Остановить приложения можно с помощью `Ctrl+C`
+12. Остановить kafka-контейнеры можно, перейдя в `kafka-cluster`, выполнив `docker compose down -v`
