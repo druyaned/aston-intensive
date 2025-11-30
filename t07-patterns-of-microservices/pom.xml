@@ -51,6 +51,7 @@
     <module>t07-api-gateway</module>
     <!-- Step#08: add Dicovery Service -->
     <module>t07-discovery-service</module>
+    <!-- Step#12: add Config Service -->
     <module>t07-config-service</module>
   </modules>
 
