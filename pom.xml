@@ -56,7 +56,9 @@
     <module>t03-testing</module>
     <module>t04-spring</module>
     <module>t05-kafka</module>
+    <module>t06-web</module>
     <module>t07-patterns-of-microservices</module>
+    <module>t08-devops</module>
   </modules>
 
 </project>
