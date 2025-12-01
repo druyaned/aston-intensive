@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+        https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>druyaned</groupId>
+    <artifactId>aston-intensive</artifactId>
+    <version>1.0</version>
+  </parent>
+
+  <groupId>druyaned</groupId>
+  <artifactId>t07-patterns-of-microservices</artifactId>
+  <version>1.0</version>
+
+  <name>Task#07 Microservice Architecture Patterns</name>
+  <packaging>pom</packaging>
+
+  <properties>
+  </properties>
+
+  <dependencyManagement>
+    <!-- Step#02: addition of Spring Cloud BOM to manage versions of all compatible Spring Cloud
+      subproject dependencies -->
+    <dependencies>
+      <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-dependencies</artifactId>
+        <version>2025.0.0</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <dependencies>
+  </dependencies>
+
+  <build>
+    <plugins>
+    </plugins>
+  </build>
+
+  <modules>
+    <module>t07-user-events</module>
+    <module>t07-user-service</module>
+    <module>t07-notification-service</module>
+    <!-- Step#03: add API Gateway Service -->
+    <module>t07-api-gateway</module>
+    <!-- Step#08: add Dicovery Service -->
+    <module>t07-discovery-service</module>
+    <!-- Step#12: add Config Service -->
+    <module>t07-config-service</module>
+  </modules>
+
+</project>
