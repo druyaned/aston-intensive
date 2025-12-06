@@ -13,8 +13,8 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
 /**
- * Prep#01: aspect encapsulates pointcuts (controller's create and delete methods) and advices (to
- * send corresponding events by Kafka).
+ * Aspect encapsulates pointcuts (controller's create and delete methods) and advices (to send
+ * corresponding events by Kafka).
  *
  * @author druyaned
  */
@@ -26,7 +26,7 @@ public class KafkaAspect {
     private final String userEventsTopic;
 
     public KafkaAspect(KafkaTemplate<String, UserEvent> kafkaTemplate,
-            @Value("${topics.userEvents.name}") String userEventsTopic) {
+            @Value("${kafka.topics.user-events.name}") String userEventsTopic) {
 
         this.kafkaTemplate = kafkaTemplate;
         this.userEventsTopic = userEventsTopic;
@@ -42,7 +42,8 @@ public class KafkaAspect {
 
             UserDto user = createResult.content();
 
-            kafkaTemplate.send(userEventsTopic, user.getEmail(), UserEvent.creation(user.getId()));
+            UserEvent event = UserEvent.created(user.getName(), user.getId());
+            kafkaTemplate.send(userEventsTopic, user.getEmail(), event);
         }
 
         return value;
@@ -58,7 +59,8 @@ public class KafkaAspect {
 
             UserDto user = deleteResult.content();
 
-            kafkaTemplate.send(userEventsTopic, user.getEmail(), UserEvent.deletion(user.getId()));
+            UserEvent event = UserEvent.deleted(user.getName(), user.getId());
+            kafkaTemplate.send(userEventsTopic, user.getEmail(), event);
         }
 
         return value;

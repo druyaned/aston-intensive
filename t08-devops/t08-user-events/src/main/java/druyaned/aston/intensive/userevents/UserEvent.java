@@ -2,35 +2,37 @@ package druyaned.aston.intensive.userevents;
 
 /**
  * The task requires to send some notification when a user is created or deleted; so this class
- * serves to encapsulate the operation and the user that the operation was performed on.
+ * serves to encapsulate the operation and some user info that the operation was performed on.
  *
  * <p>
  * In terms of Kafka this class can be named as event or record.
+ *
+ * @see Type
  */
-public record UserEvent(Type type, Long id) {
+public record UserEvent(Type type, String name, Long id) {
 
     /**
-     * Operation type: creation or deletion.
+     * Operation type: created or deleted.
      */
-    public static enum Type {CREATE, DELETE};
+    public static enum Type {CREATED, DELETED};
 
     /**
-     * Makes a new user event of user creation.
+     * Makes a new user event of user created.
      *
      * @param id user id
-     * @return new user event of user creation
+     * @return new user event of user created
      */
-    public static UserEvent creation(Long id) {
-        return new UserEvent(Type.CREATE, id);
+    public static UserEvent created(String name, Long id) {
+        return new UserEvent(Type.CREATED, name, id);
     }
 
     /**
-     * Makes a new user event of user deletion.
+     * Makes a new user event of user deleted.
      *
      * @param id user id
-     * @return new user event of user deletion
+     * @return new user event of user deleted
      */
-    public static UserEvent deletion(Long id) {
-        return new UserEvent(Type.DELETE, id);
+    public static UserEvent deleted(String name, Long id) {
+        return new UserEvent(Type.DELETED, name, id);
     }
 }

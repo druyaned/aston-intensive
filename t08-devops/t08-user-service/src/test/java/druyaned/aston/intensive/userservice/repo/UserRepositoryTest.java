@@ -19,9 +19,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 /**
  * Integration tests of {@link UserRepository}.
  *
- * <p>
- * Step#15: activate test profile.
- *
  * @author druyaned
  */
 @DataJpaTest(properties = {

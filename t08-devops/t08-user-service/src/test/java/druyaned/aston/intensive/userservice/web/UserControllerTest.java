@@ -46,9 +46,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * Integration tests of {@link UserController}.
  *
- * <p>
- * Step#15: activate test profile.
- *
  * @author druyaned
  */
 @WebMvcTest(UserController.class)
@@ -84,7 +81,7 @@ public class UserControllerTest {
         when(userModelAssembler.toCollectionModel(anyList())).thenReturn(collectionModel);
 
         MockHttpServletResponse response = mockMvc.perform(
-                get("/user-service/users").accept(HAL_JSON))
+                get("/users").accept(HAL_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(HAL_JSON))
                 .andReturn()
@@ -145,7 +142,7 @@ public class UserControllerTest {
         when(userService.get(anyLong())).thenReturn(notFoundResult);
 
         mockMvc.perform(
-                get("/user-service/user/1").accept(HAL_JSON))
+                get("/users/1").accept(HAL_JSON))
                 .andExpect(status().isNotFound());
 
         verify(userService).get(anyLong());
@@ -162,7 +159,7 @@ public class UserControllerTest {
         when(userModelAssembler.toModel(any(UserDto.class))).thenReturn(entityModel);
 
         mockMvc.perform(
-                get("/user-service/user/" + userDto.getId()).accept(HAL_JSON))
+                get("/users/" + userDto.getId()).accept(HAL_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(HAL_JSON))
                 .andExpect(jsonPath("$.name").value(userDto.getName()))
@@ -180,7 +177,7 @@ public class UserControllerTest {
         when(userService.create(any(UserDto.class))).thenReturn(emailDuplicationResult);
 
         mockMvc.perform(
-                post("/user-service/create")
+                post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(userDto)))
                 .andExpect(status().isBadRequest());
@@ -192,12 +189,12 @@ public class UserControllerTest {
     public void createShouldReturnCreated() throws Exception {
         UserDto userDto = makeUserDto();
         Result createdResult = Result.created(userDto);
-        String expectedLocation = "http://localhost/user-service/create/user/" + userDto.getId();
+        String expectedLocation = "http://localhost/users/" + userDto.getId();
 
         when(userService.create(any(UserDto.class))).thenReturn(createdResult);
 
         mockMvc.perform(
-                post("/user-service/create")
+                post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(userDto)))
                 .andExpect(status().isCreated())
@@ -215,7 +212,7 @@ public class UserControllerTest {
         when(userService.update(anyLong(), any(UserDto.class))).thenReturn(notFoundResult);
 
         mockMvc.perform(
-                put("/user-service/update/" + userDto.getId())
+                put("/users/" + userDto.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(userDto)))
                 .andExpect(status().isNotFound());
@@ -231,7 +228,7 @@ public class UserControllerTest {
         when(userService.update(anyLong(), any(UserDto.class))).thenReturn(emailDuplicationResult);
 
         mockMvc.perform(
-                put("/user-service/update/" + userDto.getId())
+                put("/users/" + userDto.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(userDto)))
                 .andExpect(status().isBadRequest());
@@ -247,7 +244,7 @@ public class UserControllerTest {
         when(userService.update(anyLong(), any(UserDto.class))).thenReturn(updatedResult);
 
         mockMvc.perform(
-                put("/user-service/update/" + userDto.getId())
+                put("/users/" + userDto.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(userDto)))
                 .andExpect(status().isOk());
@@ -263,7 +260,7 @@ public class UserControllerTest {
         when(userService.delete(anyLong())).thenReturn(notFoundResult);
 
         mockMvc.perform(
-                delete("/user-service/delete/" + id))
+                delete("/users/" + id))
                 .andExpect(status().isNotFound());
 
         verify(userService).delete(anyLong());
@@ -276,7 +273,7 @@ public class UserControllerTest {
 
         when(userService.delete(anyLong())).thenReturn(deletedResult);
 
-        mockMvc.perform(delete("/user-service/delete/" + userDto.getId()))
+        mockMvc.perform(delete("/users/" + userDto.getId()))
                 .andExpect(status().isOk());
 
         verify(userService).delete(anyLong());

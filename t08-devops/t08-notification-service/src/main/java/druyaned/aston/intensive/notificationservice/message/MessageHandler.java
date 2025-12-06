@@ -8,6 +8,7 @@ import druyaned.aston.intensive.notificationservice.consume.UserEventListener;
  * @author druyaned
  *
  * @see UserEventListener
+ * @see MailMessageHandler
  */
 public interface MessageHandler {
 

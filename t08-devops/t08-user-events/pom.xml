@@ -11,7 +11,6 @@
     <version>1.0</version>
   </parent>
 
-  <!-- Prep#03: separate dependency of UserEvent for Kafka (not in user-service) -->
   <groupId>druyaned</groupId>
   <artifactId>t08-user-events</artifactId>
   <version>1.0</version>

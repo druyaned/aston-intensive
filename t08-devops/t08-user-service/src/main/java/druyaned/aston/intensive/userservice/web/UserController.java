@@ -1,5 +1,6 @@
 package druyaned.aston.intensive.userservice.web;
 
+import druyaned.aston.intensive.userservice.UserServiceApp;
 import druyaned.aston.intensive.userservice.model.UserDto;
 import druyaned.aston.intensive.userservice.serve.UserService;
 import druyaned.aston.intensive.userservice.serve.UserService.Result;
@@ -7,11 +8,6 @@ import static druyaned.aston.intensive.userservice.serve.UserService.Result.Type
 import static druyaned.aston.intensive.userservice.serve.UserService.Result.Type.FOUND;
 import static druyaned.aston.intensive.userservice.serve.UserService.Result.Type.NOT_FOUND;
 import static druyaned.aston.intensive.userservice.serve.UserService.Result.Type.UPDATED;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.List;
@@ -30,14 +26,13 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 /**
- * API implements CRUD operations of {@code user-service} application.
+ * Implementation of CRUD API of {@link UserServiceApp user-service application}.
  *
  * @author druyaned
  */
 @RestController
-@RequestMapping("/user-service")
-@Tag(name = "Users", description = "User management API")
-public class UserController {
+@RequestMapping("/users")
+public class UserController implements UserServiceApi {
 
     private final UserService userService;
     private final UserModelAssembler userModelAssembler;
@@ -47,27 +42,17 @@ public class UserController {
         this.userModelAssembler = userModelAssembler;
     }
 
-    @GetMapping("/users")
-    @Operation(summary = "Get all users",
-            description = "Returns a paged list of users with HATEOAS links")
-    @ApiResponse(responseCode = "200", description = "Users are found (possibly empty list)")
-    public ResponseEntity<CollectionModel<EntityModel<UserDto>>> getAll(
-            @Parameter(description = "Pagination parameters") Pageable pageable) {
-
+    @Override
+    @GetMapping
+    public ResponseEntity<CollectionModel<EntityModel<UserDto>>> getAll(Pageable pageable) {
         List<UserDto> users = userService.getAll(pageable);
 
         return ResponseEntity.ok(userModelAssembler.toCollectionModel(users));
     }
 
-    @GetMapping("/user/{id}")
-    @Operation(summary = "Get user by ID", description = "Returns single user with HATEOAS links")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "User is found"),
-        @ApiResponse(responseCode = "404", description = "User is not found")
-    })
-    public ResponseEntity<EntityModel<UserDto>> get(
-            @Parameter(description = "User ID", required = true) @PathVariable Long id) {
-
+    @Override
+    @GetMapping("/{id}")
+    public ResponseEntity<EntityModel<UserDto>> get(@PathVariable Long id) {
         Result getResult = userService.get(id);
 
         return getResult.type() == FOUND
@@ -75,12 +60,8 @@ public class UserController {
                 : ResponseEntity.notFound().build();
     }
 
-    @PostMapping("/create")
-    @Operation(summary = "Create a new user")
-    @ApiResponses({
-        @ApiResponse(responseCode = "201", description = "User is created"),
-        @ApiResponse(responseCode = "400", description = "Email duplication or validation error")
-    })
+    @Override
+    @PostMapping
     public ResponseEntity<Result> create(@Valid @RequestBody UserDto userDto) {
         Result createResult = userService.create(userDto);
 
@@ -92,7 +73,6 @@ public class UserController {
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequestUri()
-                .path("/user")
                 .path("/{id}")
                 .buildAndExpand(savedUser.getId())
                 .toUri();
@@ -100,15 +80,10 @@ public class UserController {
         return ResponseEntity.created(location).body(createResult);
     }
 
-    @PutMapping("/update/{id}")
-    @Operation(summary = "Update existing user")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "User is updated"),
-        @ApiResponse(responseCode = "400", description = "Email duplication or validation error"),
-        @ApiResponse(responseCode = "404", description = "User is not found")
-    })
+    @Override
+    @PutMapping("/{id}")
     public ResponseEntity<Result> update(
-            @Parameter(description = "User ID", required = true) @PathVariable Long id,
+            @PathVariable Long id,
             @Valid @RequestBody UserDto userDto) {
 
         Result updateResult = userService.update(id, userDto);
@@ -121,12 +96,8 @@ public class UserController {
         };
     }
 
-    @DeleteMapping("/delete/{id}")
-    @Operation(summary = "Delete existing user")
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "User is deleted"),
-        @ApiResponse(responseCode = "404", description = "User is not found")
-    })
+    @Override
+    @DeleteMapping("/{id}")
     public ResponseEntity<Result> delete(@PathVariable Long id) {
         Result deleteResult = userService.delete(id);
 

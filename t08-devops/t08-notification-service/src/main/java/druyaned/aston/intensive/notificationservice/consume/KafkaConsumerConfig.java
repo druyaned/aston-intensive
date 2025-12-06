@@ -1,4 +1,4 @@
-package druyaned.aston.intensive.userservice.notify;
+package druyaned.aston.intensive.notificationservice.consume;
 
 import druyaned.aston.intensive.userevents.UserEventsProperties;
 import org.apache.kafka.clients.admin.NewTopic;
@@ -17,7 +17,7 @@ import org.springframework.kafka.config.TopicBuilder;
  * @author druyaned
  */
 @Configuration
-public class KafkaProducerConfig {
+public class KafkaConsumerConfig {
 
     @Bean
     @ConfigurationProperties(prefix = "kafka.topics.user-events")

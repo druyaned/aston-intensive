@@ -5,8 +5,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.netflix.eureka.server.EnableEurekaServer;
 
 /**
- * Step#08: Discovery Service (a.k.a Eureka Server); implementation of the pattern "Server-side
- * service discovery". Service Registry (Eureka) is basically a phonebook for microservices, with
+ * Discovery Service (a.k.a Eureka Server); implementation of the pattern "Server-side service
+ * discovery". Service Registry (Eureka) is basically a phonebook for microservices, with
  * auto-updates.
  *
  * @author druyaned

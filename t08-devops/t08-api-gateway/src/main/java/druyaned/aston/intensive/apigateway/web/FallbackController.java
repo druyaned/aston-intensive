@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
 /**
- * Step#07: provides a fallback that is called in case of a unavailability of the user-service.
+ * Provides a fallback that is called in case of a unavailability of the user-service.
  *
  * @author druyaned
  */

@@ -9,35 +9,32 @@ import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
 import java.io.IOException;
 import java.util.Properties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 /**
- * {@link MessageHandler} of {@link Session}.
+ * Prep#03: {@link MessageHandler} of {@link Session}.
  *
  * @author druyaned
  */
 @Component
 public class MailMessageHandler implements MessageHandler {
 
-    private final String senderAddressStr;
-    private final String applicationPassword;
+    private static final Logger logger = LoggerFactory.getLogger(MailMessageHandler.class);
+
+    private final MailCredentials credentials;
     private final Session session;
 
-    public MailMessageHandler() throws IOException {
-        // These properties should not be handled by Spring, as they are sensitive
-        Properties connectionProps = new Properties();
-        connectionProps.load(MailMessageHandler.class
-                .getResourceAsStream("/mail-connection.properties"));
-
-        senderAddressStr = connectionProps.getProperty("addr");
-        applicationPassword = connectionProps.getProperty("pass");
+    public MailMessageHandler(SmtpProperties smtp, MailCredentials credentials) throws IOException {
+        this.credentials = credentials;
 
         Properties props = new Properties();
-        props.put("mail.smtp.host", "smtp.yandex.ru");
-        props.put("mail.smtp.port", "465");
-        props.put("mail.smtp.auth", "true");
-        props.put("mail.smtp.starttls.enable", "true");
-        props.put("mail.smtp.ssl.enable", "true");
+        props.put("mail.smtp.host", smtp.host());
+        props.put("mail.smtp.port", smtp.port());
+        props.put("mail.smtp.auth", smtp.auth());
+        props.put("mail.smtp.starttls.enable", smtp.starttlsEnable());
+        props.put("mail.smtp.ssl.enable", smtp.sslEnable());
 
         session = Session.getInstance(props);
     }
@@ -53,7 +50,7 @@ public class MailMessageHandler implements MessageHandler {
      */
     @Override
     public void handle(String email, String message) throws AddressException, MessagingException {
-        InternetAddress senderAddress = new InternetAddress(senderAddressStr);
+        InternetAddress senderAddress = new InternetAddress(credentials.addr());
         InternetAddress recipientAddress = new InternetAddress(email);
 
         Message messageObj = new MimeMessage(session);
@@ -64,6 +61,8 @@ public class MailMessageHandler implements MessageHandler {
         messageObj.setSubject("Notification Service sends a message");
         messageObj.setText(message);
 
-        Transport.send(messageObj, senderAddressStr, applicationPassword);
+        Transport.send(messageObj, credentials.addr(), credentials.pass());
+
+        logger.info("The message '" + message + "' was sent to '" + email + "'");
     }
 }

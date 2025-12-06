@@ -22,12 +22,9 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 /**
- * Prep#02: integration tests for {@link KafkaAspect} class. Spring Boot implicitly uses
+ * Integration tests for {@link KafkaAspect} class. Spring Boot implicitly uses
  * {@code @EnableAspectJAutoProxy}. But some auto-configurations are useless, e.g.
  * {@code DataSourceAutoConfiguration}, so they are disabled in the properties.
- *
- * <p>
- * Step#15: activate test profile.
  *
  * @author druyaned
  */
@@ -48,7 +45,7 @@ public class KafkaAspectTest {
     @MockitoBean
     private KafkaTemplate<String, UserEvent> kafkaTemplate;
 
-    @Value("${topics.userEvents.name}")
+    @Value("${kafka.topics.user-events.name}")
     private String userEventsTopic;
 
     @Test
@@ -70,7 +67,7 @@ public class KafkaAspectTest {
     public void aspectIsInvokedByCreation() {
         UserDto userDto = makeUserDto();
         Result createdResult = Result.created(userDto);
-        UserEvent event = UserEvent.creation(userDto.getId());
+        UserEvent event = UserEvent.created(userDto.getName(), userDto.getId());
 
         when(userService.create(eq(userDto))).thenReturn(createdResult);
         when(kafkaTemplate.send(eq(userEventsTopic), eq(userDto.getEmail()), eq(event)))
@@ -101,7 +98,7 @@ public class KafkaAspectTest {
     public void aspectIsInvokedByDeletion() {
         UserDto userDto = makeUserDto();
         Result deleteResult = Result.deleted(userDto);
-        UserEvent event = UserEvent.deletion(userDto.getId());
+        UserEvent event = UserEvent.deleted(userDto.getName(), userDto.getId());
 
         when(userService.delete(eq(userDto.getId()))).thenReturn(deleteResult);
         when(kafkaTemplate.send(eq(userEventsTopic), eq(userDto.getEmail()), eq(event)))

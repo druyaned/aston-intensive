@@ -5,6 +5,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import druyaned.aston.intensive.notificationservice.web.MailMessageDto;
 import druyaned.aston.intensive.notificationservice.web.SendMailController;
 import jakarta.mail.internet.AddressException;
+import static org.hamcrest.Matchers.startsWith;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import static org.mockito.Mockito.doNothing;
@@ -23,9 +24,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * Integration tests of {@link SendMailController}.
- *
- * <p>
- * Step#15: activate test profile.
  *
  * @author druyaned
  */
@@ -48,7 +46,7 @@ public class SendMailControllerTest {
     }
 
     @Test
-    public void sendInvalidMailShouldReturnBadRequest() throws Exception {
+    public void sendInvalidMailShouldReturnInternalServerError() throws Exception {
         String email = "very_bad_email";
         String message = "Some very important message";
 
@@ -60,11 +58,11 @@ public class SendMailControllerTest {
                 .when(mailMessageHandler).handle(email, message);
 
         mockMvc
-                .perform(post("/notification-service/send")
+                .perform(post("/notify")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(mailMessageDto)))
-                .andExpect(status().isBadRequest())
-                .andExpect(content().string("Invalid Addresses"));
+                .andExpect(status().isInternalServerError())
+                .andExpect(content().string(startsWith("Failed to send email: ")));
 
         verify(mailMessageHandler).handle(email, message);
     }
@@ -81,7 +79,7 @@ public class SendMailControllerTest {
         doNothing().when(mailMessageHandler).handle(email, message);
 
         mockMvc
-                .perform(post("/notification-service/send")
+                .perform(post("/notify")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(mailMessageDto)))
                 .andExpect(status().isOk())

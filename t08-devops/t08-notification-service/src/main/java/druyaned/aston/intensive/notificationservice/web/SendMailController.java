@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @author druyaned
  */
 @RestController
-@RequestMapping("/notification-service")
+@RequestMapping("/notify")
 public class SendMailController {
 
     private final MailMessageHandler mailMessageHandler;
@@ -23,7 +23,7 @@ public class SendMailController {
         this.mailMessageHandler = mailMessageHandler;
     }
 
-    @PostMapping("/send")
+    @PostMapping
     public ResponseEntity<String> sendMail(@RequestBody MailMessageDto mailMessageDto) {
         String email = mailMessageDto.getEmail();
         String message = mailMessageDto.getMessage();
@@ -35,7 +35,8 @@ public class SendMailController {
 
         } catch (MessagingException exc) {
 
-            return ResponseEntity.badRequest().body(exc.getMessage());
+            return ResponseEntity.internalServerError()
+                    .body("Failed to send email: " + exc.getMessage());
         }
     }
 }

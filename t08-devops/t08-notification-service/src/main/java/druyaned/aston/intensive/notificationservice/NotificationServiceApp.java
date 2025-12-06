@@ -8,9 +8,6 @@ import org.springframework.kafka.annotation.EnableKafka;
 /**
  * Application to handle {@link UserEvent user events} and to send mails.
  *
- * <p>
- * Prep#04: some changes and documentations are written for each class in each subpackage here.
- *
  * @author druyaned
  */
 @SpringBootApplication
