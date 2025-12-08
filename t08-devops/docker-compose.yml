@@ -102,7 +102,7 @@ services:
     container_name: t08-discovery-service
     restart: unless-stopped
     depends_on:
-      t08-config-service
+      - t08-config-service
     ports:
       - "58761:8761"
     environment:
@@ -116,12 +116,16 @@ services:
     container_name: t08-user-service
     restart: unless-stopped
     depends_on:
-      kafka-1
-      kafka-2
+      kafka-1:
+        condition: service_started
+      kafka-2:
+        condition: service_started
       postgres:
         condition: service_healthy
-      t08-config-service
-      t08-discovery-service
+      t08-config-service:
+        condition: service_started
+      t08-discovery-service:
+        condition: service_started
     ports:
       - "58085:8085"
     environment:
@@ -139,10 +143,10 @@ services:
     container_name: t08-notification-service
     restart: unless-stopped
     depends_on:
-      kafka-1
-      kafka-2
-      t08-config-service
-      t08-discovery-service
+      - kafka-1
+      - kafka-2
+      - t08-config-service
+      - t08-discovery-service
     ports:
       - "58086:8086"
     environment:
@@ -156,10 +160,10 @@ services:
     container_name: t08-api-gateway
     restart: unless-stopped
     depends_on:
-      t08-config-service
-      t08-discovery-service
-      t08-user-service
-      t08-notification-service
+      - t08-config-service
+      - t08-discovery-service
+      - t08-user-service
+      - t08-notification-service
     ports:
       - "8080:8082"
     environment:
